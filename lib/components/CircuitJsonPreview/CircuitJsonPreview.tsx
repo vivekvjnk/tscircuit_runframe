@@ -56,6 +56,7 @@ import { version } from "../../../package.json"
 import type { Object3D } from "three"
 import { useEvalVersions } from "lib/hooks/use-eval-versions"
 import { FileMenuLeftHeader } from "../FileMenuLeftHeader"
+import { ChatInterface } from "../ChatInterface/ChatInterface"
 
 declare global {
   interface Window {
@@ -120,6 +121,7 @@ export const CircuitJsonPreview = ({
   projectName,
   onRerunWithDebug,
   solverEvents,
+  showChatBar = true,
 }: PreviewContentProps) => {
   useStyles()
 
@@ -218,10 +220,10 @@ export const CircuitJsonPreview = ({
     ) {
       setActiveTab(
         lastActiveTab ??
-          defaultActiveTab ??
-          defaultTab ??
-          availableTabs?.[0] ??
-          "pcb",
+        defaultActiveTab ??
+        defaultTab ??
+        availableTabs?.[0] ??
+        "pcb",
       )
     }
   }, [circuitJson])
@@ -241,7 +243,7 @@ export const CircuitJsonPreview = ({
         className={cn(
           "rf-md:sticky rf-md:top-2 rf-h-full",
           isFullScreen &&
-            "rf-fixed rf-top-0 rf-left-0 rf-w-full rf-h-full rf-bg-white rf-overflow-hidden",
+          "rf-fixed rf-top-0 rf-left-0 rf-w-full rf-h-full rf-bg-white rf-overflow-hidden",
         )}
       >
         <Tabs
@@ -371,8 +373,8 @@ export const CircuitJsonPreview = ({
                       <EllipsisIcon className="rf-w-4 rf-h-4" />
                       {((circuitJsonErrors && circuitJsonErrors.length > 0) ||
                         errorMessage) && (
-                        <span className="rf-inline-flex rf-absolute rf-top-[6px] rf-right-[4px] rf-items-center rf-justify-center rf-w-1 rf-h-1 rf-ml-2 rf-text-[8px] rf-font-bold rf-text-white rf-bg-red-500 rf-rounded-full" />
-                      )}
+                          <span className="rf-inline-flex rf-absolute rf-top-[6px] rf-right-[4px] rf-items-center rf-justify-center rf-w-1 rf-h-1 rf-ml-2 rf-text-[8px] rf-font-bold rf-text-white rf-bg-red-500 rf-rounded-full" />
+                        )}
                     </div>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="rf-*:text-xs rf-z-[101]">
@@ -540,19 +542,19 @@ export const CircuitJsonPreview = ({
                           }
                         }
                       }}
-                      // onEditEventsChanged={(editEvents) => {
-                      //   if (editEvents.some((editEvent) => editEvent.in_progress))
-                      //     return
-                      //   // Update state with new edit events
-                      //   const newManualEditsFileContent = applyPcbEditEvents({
-                      //     editEvents,
-                      //     circuitJson,
-                      //     manualEditsFileContent,
-                      //   })
-                      //   onManualEditsFileContentChange?.(
-                      //     JSON.stringify(newManualEditsFileContent, null, 2),
-                      //   )
-                      // }}
+                    // onEditEventsChanged={(editEvents) => {
+                    //   if (editEvents.some((editEvent) => editEvent.in_progress))
+                    //     return
+                    //   // Update state with new edit events
+                    //   const newManualEditsFileContent = applyPcbEditEvents({
+                    //     editEvents,
+                    //     circuitJson,
+                    //     manualEditsFileContent,
+                    //   })
+                    //   onManualEditsFileContentChange?.(
+                    //     JSON.stringify(newManualEditsFileContent, null, 2),
+                    //   )
+                    // }}
                     />
                   ) : (
                     <PreviewEmptyState onRunClicked={onRunClicked} />
@@ -787,8 +789,8 @@ export const CircuitJsonPreview = ({
                 )}
               >
                 {errorMessage ||
-                (circuitJsonErrors && circuitJsonErrors.length > 0) ||
-                circuitJson ? (
+                  (circuitJsonErrors && circuitJsonErrors.length > 0) ||
+                  circuitJson ? (
                   <ErrorTabContent
                     code={code}
                     fsMap={fsMap}
@@ -833,6 +835,7 @@ export const CircuitJsonPreview = ({
             </TabsContent>
           )}
         </Tabs>
+        {showChatBar && <ChatInterface />}
       </div>
     </div>
   )
