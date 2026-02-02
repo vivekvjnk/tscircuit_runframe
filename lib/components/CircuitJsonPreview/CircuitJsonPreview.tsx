@@ -122,6 +122,7 @@ export const CircuitJsonPreview = ({
   onRerunWithDebug,
   solverEvents,
   showChatBar = true,
+  agentUrl = "ws://localhost:8080/agent",
 }: PreviewContentProps) => {
   useStyles()
 
@@ -835,7 +836,7 @@ export const CircuitJsonPreview = ({
             </TabsContent>
           )}
         </Tabs>
-        {showChatBar && <ChatInterface />}
+        {showChatBar && <ChatInterface agentUrl={agentUrl} />}
       </div>
     </div>
   )

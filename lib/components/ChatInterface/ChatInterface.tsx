@@ -1,93 +1,389 @@
-import React, { useState } from "react"
-import { Search, Send, X, MessageSquare, Sparkles } from "lucide-react"
+import React, { useState, useEffect, useCallback, useRef } from "react"
+import { Search, Send, X, MessageSquare, Sparkles, Loader2, CheckCircle2, AlertCircle, Terminal, Image as ImageIcon, Pin, PinOff, ChevronUp, ChevronDown, Minimize2 } from "lucide-react"
 import { cn } from "lib/utils"
+import { useAgentSocket, type AgentMessage } from "lib/hooks/use-agent-socket"
 
-export const ChatInterface = () => {
+interface Message {
+    role: "user" | "assistant"
+    content: string
+    status?: "thinking" | "evaluating" | "completed" | "error"
+    image?: string
+}
+
+export const ChatInterface = ({
+    agentUrl = "ws://localhost:8080/agent"
+}: {
+    agentUrl?: string
+}) => {
     const [query, setQuery] = useState("")
-    const [isOpen, setIsOpen] = useState(false)
+    const [isMinimized, setIsMinimized] = useState(true)
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+    const [messages, setMessages] = useState<Message[]>([
+        { role: "assistant", content: "Hello! How can I help you with your circuit design today?" }
+    ])
+    const [agentStatus, setAgentStatus] = useState<"idle" | "thinking" | "evaluating" | "failed">("idle")
+    const [isPinned, setIsPinned] = useState(false)
+    const [isFocused, setIsFocused] = useState(false)
+    const scrollRef = useRef<HTMLDivElement>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    // Scroll to bottom on new messages
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        }
+    }, [messages])
+
+    // Click outside detection
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                // If clicked outside, stop focus and hide history if not pinned
+                setIsFocused(false)
+                if (!isPinned) {
+                    setIsHistoryOpen(false)
+                }
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [isPinned])
+
+    const effectiveShowHistory = !isMinimized && (isHistoryOpen || isFocused || isPinned)
+
+    const handleAgentMessage = useCallback((msg: AgentMessage) => {
+        console.log("Received agent message:", msg)
+
+        switch (msg.type) {
+            case "AGENT_THINKING":
+                setAgentStatus("thinking")
+                setMessages(prev => {
+                    const last = prev[prev.length - 1]
+                    if (last && last.role === "assistant" && last.status === "thinking") {
+                        return [...prev.slice(0, -1), { ...last, content: msg.payload?.text || last.content }]
+                    }
+                    return [...prev, { role: "assistant", content: msg.payload?.text || "Thinking...", status: "thinking" }]
+                })
+                break
+
+            case "EVALUATION_STATUS":
+                setAgentStatus("evaluating")
+                setMessages(prev => {
+                    const last = prev[prev.length - 1]
+                    if (last && last.role === "assistant" && (last.status === "thinking" || last.status === "evaluating")) {
+                        return [...prev.slice(0, -1), { ...last, content: msg.payload?.text || "Evaluating...", status: "evaluating" }]
+                    }
+                    return [...prev, { role: "assistant", content: msg.payload?.text || "Evaluating...", status: "evaluating" }]
+                })
+                break
+
+            case "FILE_SYNC_COMPLETE":
+                setAgentStatus("idle")
+                setMessages(prev => {
+                    const last = prev[prev.length - 1]
+                    if (last && last.role === "assistant" && (last.status === "thinking" || last.status === "evaluating")) {
+                        return [...prev.slice(0, -1), { ...last, content: "Changes applied successfully!", status: "completed" }]
+                    }
+                    return [...prev, { role: "assistant", content: "Changes applied successfully!", status: "completed" }]
+                })
+                break
+
+            case "ERROR":
+                setAgentStatus("failed")
+                setMessages(prev => [...prev, { role: "assistant", content: msg.payload?.message || "An error occurred.", status: "error" }])
+                break
+
+            case "CODE_GENERATED":
+                // Optional: Show code in chat or handle separately
+                console.log("Code generated:", msg.payload?.code)
+                break
+        }
+    }, [])
+
+    const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!query.trim()) return
-        console.log("Submitting query:", query)
-        // Handle query submission logic here
+
+        const userMsg = query.trim()
+        setMessages(prev => [...prev, { role: "user", content: userMsg }])
         setQuery("")
+
+        // Ensure history is visible when sending
+        setIsHistoryOpen(true)
+
+        if (wsStatus !== "open") {
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: "I'm currently disconnected from the AI server. Please ensure the backend is running and try again.",
+                status: "error"
+            }])
+            return
+        }
+
+        send({
+            type: "USER_PROMPT",
+            payload: { prompt: userMsg }
+        })
+    }
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file || wsStatus !== "open") return
+
+        const reader = new FileReader()
+        reader.onload = (event) => {
+            const base64 = event.target?.result as string
+
+            // Add to messages UI
+            setMessages(prev => [...prev, {
+                role: "user",
+                content: `Uploaded ${file.name}`,
+                image: base64
+            }])
+            setIsHistoryOpen(true)
+
+            // Send via WebSocket
+            send({
+                type: "DOCUMENT_UPLOAD",
+                payload: {
+                    base64: base64.split(',')[1], // remove data:image/png;base64,
+                    fileName: file.name,
+                    fileType: file.type
+                }
+            })
+        }
+        reader.readAsDataURL(file)
+
+        // Reset input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ""
+        }
     }
 
     return (
-        <div className="rf-absolute rf-bottom-6 rf-right-6 rf-z-[100] rf-flex rf-flex-col rf-items-end rf-gap-4">
-            {/* Chat Window (Hidden for now, can be expanded) */}
-            {isOpen && (
+        <div
+            ref={containerRef}
+            className="rf-absolute rf-bottom-6 rf-right-6 rf-z-[100] rf-flex rf-flex-col rf-items-end rf-gap-3"
+        >
+            {/* Chat Window */}
+            {effectiveShowHistory && (
                 <div className="rf-w-[400px] rf-h-[500px] rf-bg-white rf-rounded-2xl rf-shadow-2xl rf-border rf-border-gray-100 rf-flex rf-flex-col rf-overflow-hidden rf-animate-in rf-fade-in rf-slide-in-from-bottom-4">
                     <div className="rf-p-4 rf-border-b rf-bg-gray-50/50 rf-flex rf-items-center rf-justify-between">
                         <div className="rf-flex rf-items-center rf-gap-2">
                             <div className="rf-bg-blue-600 rf-p-1.5 rf-rounded-lg">
                                 <Sparkles className="rf-w-4 rf-h-4 rf-text-white" />
                             </div>
-                            <span className="rf-font-semibold rf-text-sm rf-text-gray-800">tscircuit AI Assistant</span>
-                        </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="rf-p-1 rf-rounded-lg hover:rf-bg-gray-200 rf-transition-colors"
-                        >
-                            <X className="rf-w-4 rf-h-4 rf-text-gray-500" />
-                        </button>
-                    </div>
-                    <div className="rf-flex-grow rf-p-4 rf-overflow-y-auto rf-bg-gray-50/30">
-                        <div className="rf-flex rf-flex-col rf-gap-4">
-                            <div className="rf-bg-white rf-p-3 rf-rounded-2xl rf-rounded-tl-none rf-shadow-sm rf-border rf-border-gray-100 rf-max-w-[85%] rf-text-sm rf-text-gray-700">
-                                Hello! How can I help you with your circuit design today?
+                            <div>
+                                <h3 className="rf-font-semibold rf-text-sm rf-text-gray-800">tscircuit AI Assistant</h3>
+                                <div className="rf-flex rf-items-center rf-gap-1.5">
+                                    <div className={cn("rf-w-1.5 rf-h-1.5 rf-rounded-full", wsStatus === "open" ? "rf-bg-green-500" : "rf-bg-red-500")} />
+                                    <span className="rf-text-[10px] rf-text-gray-500 rf-uppercase rf-tracking-wider">{wsStatus}</span>
+                                </div>
                             </div>
                         </div>
+                        <div className="rf-flex rf-items-center rf-gap-2">
+                            <button
+                                onClick={() => setIsPinned(!isPinned)}
+                                className={cn(
+                                    "rf-p-1 rf-rounded-lg rf-transition-colors",
+                                    isPinned ? "rf-bg-blue-100 rf-text-blue-600" : "rf-text-gray-400 hover:rf-bg-gray-200"
+                                )}
+                                title={isPinned ? "Unpin chat" : "Pin chat"}
+                            >
+                                {isPinned ? <Pin className="rf-w-4 rf-h-4" /> : <PinOff className="rf-w-4 rf-h-4" />}
+                            </button>
+                            <button
+                                onClick={() => setIsHistoryOpen(false)}
+                                className="rf-p-1 rf-rounded-lg hover:rf-bg-gray-200 rf-transition-colors"
+                            >
+                                <X className="rf-w-4 rf-h-4 rf-text-gray-500" />
+                            </button>
+                        </div>
                     </div>
+
+                    <div
+                        ref={scrollRef}
+                        className="rf-flex-grow rf-p-4 rf-overflow-y-auto rf-bg-gray-50/30 rf-flex rf-flex-col rf-gap-4"
+                    >
+                        {messages.map((msg, i) => (
+                            <div
+                                key={i}
+                                className={cn(
+                                    "rf-flex rf-flex-col rf-gap-1.5 rf-max-w-[85%]",
+                                    msg.role === "user" ? "rf-self-end rf-items-end" : "rf-self-start rf-items-start"
+                                )}
+                            >
+                                <div className={cn(
+                                    "rf-p-3 rf-rounded-2xl rf-text-sm rf-shadow-sm rf-border",
+                                    msg.role === "user"
+                                        ? "rf-bg-blue-600 rf-text-white rf-border-blue-700 rf-rounded-tr-none"
+                                        : "rf-bg-white rf-text-gray-700 rf-border-gray-100 rf-rounded-tl-none"
+                                )}>
+                                    {msg.image && (
+                                        <div className="rf-mb-2 rf-rounded-lg rf-overflow-hidden rf-border rf-border-white/20">
+                                            <img src={msg.image} alt="Uploaded" className="rf-w-full rf-h-auto" />
+                                        </div>
+                                    )}
+                                    {msg.content}
+
+                                    {msg.status && msg.status !== "completed" && (
+                                        <div className="rf-mt-2 rf-flex rf-items-center rf-gap-2 rf-text-[11px] rf-font-medium rf-opacity-80">
+                                            {msg.status === "thinking" && <Loader2 className="rf-w-3 rf-h-3 rf-animate-spin" />}
+                                            {msg.status === "evaluating" && <Terminal className="rf-w-3 rf-h-3" />}
+                                            <span className="rf-capitalize">{msg.status}...</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {agentStatus !== "idle" && (
+                        <div className="rf-px-4 rf-py-2 rf-bg-blue-50/50 rf-border-t rf-border-blue-100 rf-flex rf-items-center rf-justify-between">
+                            <div className="rf-flex rf-items-center rf-gap-2">
+                                <Loader2 className="rf-w-3.5 rf-h-3.5 rf-animate-spin rf-text-blue-600" />
+                                <span className="rf-text-xs rf-font-medium rf-text-blue-700">
+                                    {agentStatus === "thinking" ? "Agent is thinking..." : "Validating circuit..."}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => send({ type: "CANCEL_TASK" })}
+                                className="rf-text-xs rf-text-blue-600 hover:rf-text-blue-800 rf-font-semibold"
+                            >
+                                Stop
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* Google Search Style Bar */}
-            <form
-                onSubmit={handleSubmit}
+            {/* Bubble / Search Bar Toggle Container */}
+            <div
                 className={cn(
-                    "rf-flex rf-items-center rf-bg-white rf-rounded-full rf-shadow-2xl rf-border rf-border-gray-100 rf-px-4 rf-py-2 rf-transition-all rf-duration-300 hover:rf-shadow-xl focus-within:rf-ring-2 focus-within:rf-ring-blue-500/20",
-                    isOpen ? "rf-w-[400px]" : "rf-w-[320px] focus-within:rf-w-[400px]"
+                    "rf-relative rf-flex rf-items-center rf-transition-all rf-duration-500 rf-ease-in-out rf-shadow-2xl rf-border",
+                    isMinimized
+                        ? "rf-w-14 rf-h-14 rf-bg-blue-600 rf-rounded-full rf-border-blue-700 hover:rf-scale-110 hover:rf-bg-blue-700"
+                        : "rf-w-[480px] rf-h-14 rf-bg-white rf-rounded-full rf-border-gray-100 rf-px-2"
                 )}
             >
-                <div
-                    onClick={() => setIsOpen(!isOpen)}
-                    className="rf-cursor-pointer rf-mr-3 rf-group"
-                >
-                    <Search className="rf-w-5 rf-h-5 rf-text-gray-400 group-hover:rf-text-blue-500 rf-transition-colors" />
-                </div>
-                <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => {
-                        // Optional: expand or show tips
-                    }}
-                    placeholder="Ask tscircuit AI..."
-                    className="rf-flex-grow rf-bg-transparent rf-outline-none rf-text-sm rf-text-gray-700 placeholder:rf-text-gray-400"
-                />
-                {query && (
-                    <button
-                        type="button"
-                        onClick={() => setQuery("")}
-                        className="rf-p-1 rf-rounded-full hover:rf-bg-gray-100 rf-transition-colors rf-mr-2"
-                    >
-                        <X className="rf-w-4 rf-h-4 rf-text-gray-400" />
-                    </button>
-                )}
-                <div className="rf-w-[1px] rf-h-5 rf-bg-gray-200 rf-mx-2" />
+                {/* Persistent Logo / Expansion Trigger */}
                 <button
-                    type="submit"
+                    onClick={() => {
+                        if (isMinimized) {
+                            setIsMinimized(false)
+                            setTimeout(() => inputRef.current?.focus(), 100)
+                        }
+                    }}
                     className={cn(
-                        "rf-p-2 rf-rounded-full rf-transition-all",
-                        query.trim() ? "rf-bg-blue-600 rf-text-white rf-shadow-md" : "rf-bg-gray-50 rf-text-gray-300"
+                        "rf-flex rf-items-center rf-justify-center rf-transition-all rf-duration-500 rf-flex-shrink-0",
+                        isMinimized
+                            ? "rf-w-full rf-h-full"
+                            : "rf-w-9 rf-h-9 rf-bg-blue-600 rf-rounded-full rf-ml-0.5"
                     )}
-                    disabled={!query.trim()}
                 >
-                    <Send className="rf-w-3.5 rf-h-3.5" />
+                    <Sparkles className={cn(
+                        "rf-text-white rf-transition-all rf-duration-500",
+                        isMinimized ? "rf-w-6 rf-h-6" : "rf-w-4 rf-h-4"
+                    )} />
                 </button>
-            </form>
+
+                {/* Form Elements (Visible only when not minimized) */}
+                {!isMinimized && (
+                    <div className="rf-flex rf-items-center rf-flex-grow rf-animate-in rf-fade-in rf-duration-700 rf-delay-150">
+                        <form
+                            onSubmit={handleSubmit}
+                            className="rf-flex rf-items-center rf-flex-grow rf-ml-2"
+                        >
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                className="rf-hidden"
+                                accept="image/*,.pdf"
+                            />
+
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={query}
+                                onFocus={() => setIsFocused(true)}
+                                onBlur={() => {
+                                    setTimeout(() => setIsFocused(false), 200)
+                                }}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder="Ask tscircuit AI..."
+                                className="rf-flex-grow rf-bg-transparent rf-outline-none rf-text-sm rf-text-gray-700 placeholder:rf-text-gray-400 rf-py-2"
+                            />
+
+                            <div className="rf-flex rf-items-center rf-gap-1 rf-ml-2">
+                                {query && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuery("")}
+                                        className="rf-p-1 rf-rounded-full hover:rf-bg-gray-100 rf-transition-colors"
+                                    >
+                                        <X className="rf-w-3.5 rf-h-3.5 rf-text-gray-400" />
+                                    </button>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="rf-p-1.5 rf-rounded-full hover:rf-bg-gray-100 rf-transition-colors rf-text-gray-400 hover:rf-text-blue-500"
+                                    title="Upload documentation"
+                                >
+                                    <ImageIcon className="rf-w-4 rf-h-4" />
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                                    className={cn(
+                                        "rf-p-1.5 rf-rounded-full rf-transition-colors",
+                                        isHistoryOpen || isFocused || isPinned ? "rf-text-blue-600 rf-bg-blue-50" : "rf-text-gray-400 hover:rf-bg-gray-100"
+                                    )}
+                                    title="Toggle chat history"
+                                >
+                                    {effectiveShowHistory ? <ChevronDown className="rf-w-4 rf-h-4" /> : <ChevronUp className="rf-w-4 rf-h-4" />}
+                                </button>
+                            </div>
+
+                            <div className="rf-w-[1px] rf-h-5 rf-bg-gray-200 rf-mx-2" />
+
+                            <button
+                                type="submit"
+                                className={cn(
+                                    "rf-p-2 rf-rounded-full rf-transition-all",
+                                    query.trim() ? "rf-bg-blue-600 rf-text-white rf-shadow-md" : "rf-bg-gray-50 rf-text-gray-300"
+                                )}
+                                disabled={!query.trim()}
+                            >
+                                <Send className="rf-w-3.5 rf-h-3.5" />
+                            </button>
+
+                            <div className="rf-w-[1px] rf-h-5 rf-bg-gray-200 rf-mx-2" />
+
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setIsMinimized(true)
+                                    setIsHistoryOpen(false)
+                                    setIsFocused(false)
+                                }}
+                                className="rf-p-2 rf-rounded-full hover:rf-bg-gray-100 rf-text-gray-400 hover:rf-text-red-500 rf-transition-colors"
+                                title="Minimize to bubble"
+                            >
+                                <Minimize2 className="rf-w-3.5 rf-h-3.5" />
+                            </button>
+                        </form>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

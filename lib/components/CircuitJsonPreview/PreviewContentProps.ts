@@ -133,4 +133,9 @@ export interface PreviewContentProps {
    * Whether to show the chat bar
    */
   showChatBar?: boolean
+
+  /**
+   * The URL for the agent WebSocket server
+   */
+  agentUrl?: string
 }
