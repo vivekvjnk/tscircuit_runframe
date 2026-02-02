@@ -213,9 +213,9 @@ export const RunFrame = (props: RunFrameProps) => {
     props.fsMap instanceof Map
       ? props.fsMap
       : Object.entries(props.fsMap ?? {}).reduce(
-          (m, [k, v]) => m.set(k, v),
-          new Map(),
-        )
+        (m, [k, v]) => m.set(k, v),
+        new Map(),
+      )
   const lastFsMapRef = useRef<Map<string, string> | null>(null)
   const lastEntrypointRef = useRef<string | null>(null)
   const {
@@ -730,6 +730,7 @@ export const RunFrame = (props: RunFrameProps) => {
         showSchematicPorts={showSchematicPorts}
         onChangeShowSchematicDebugGrid={setShowSchematicDebugGrid}
         onChangeShowSchematicPorts={setShowSchematicPorts}
+        showChatBar={props.showChatBar}
       />
     </ErrorBoundary>
   )

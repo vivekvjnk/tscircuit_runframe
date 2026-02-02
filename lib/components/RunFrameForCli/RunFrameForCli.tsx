@@ -49,6 +49,7 @@ export const RunFrameForCli = (props: {
         initialMainComponentPath={initialMainComponentPath}
         onLoginRequired={openLoginDialog}
         onMainComponentPathChange={updateMainComponentHash}
+        showChatBar={true}
         leftHeaderContent={
           <div className="rf-flex rf-items-center rf-justify-between">
             <FileMenuLeftHeader

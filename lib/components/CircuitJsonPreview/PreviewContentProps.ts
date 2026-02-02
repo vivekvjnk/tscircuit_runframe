@@ -128,4 +128,9 @@ export interface PreviewContentProps {
    * List of solver started events tracked during circuit rendering
    */
   solverEvents?: SolverStartedEvent[]
+
+  /**
+   * Whether to show the chat bar
+   */
+  showChatBar?: boolean
 }

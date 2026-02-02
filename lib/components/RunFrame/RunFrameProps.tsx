@@ -159,4 +159,9 @@ export interface RunFrameProps {
    * The session token to used for the tscircuit registry
    */
   tscircuitSessionToken?: string
+
+  /**
+   * Whether to show the chat bar
+   */
+  showChatBar?: boolean
 }

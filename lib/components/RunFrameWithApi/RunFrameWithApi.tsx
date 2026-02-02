@@ -65,6 +65,11 @@ export interface RunFrameWithApiProps {
    * Called when an action requires authentication (e.g. reporting autorouting bugs)
    */
   onLoginRequired?: () => void
+
+  /**
+   * Whether to show the chat bar
+   */
+  showChatBar?: boolean
 }
 
 export const RunFrameWithApi = (props: RunFrameWithApiProps) => {
@@ -221,8 +226,8 @@ export const RunFrameWithApi = (props: RunFrameWithApiProps) => {
     () =>
       String(componentPath).length > 0
         ? {
-            mainComponentPath: componentPath,
-          }
+          mainComponentPath: componentPath,
+        }
         : {},
     [componentPath],
   )
@@ -323,6 +328,7 @@ export const RunFrameWithApi = (props: RunFrameWithApiProps) => {
         })
       }}
       onLoginRequired={props.onLoginRequired}
+      showChatBar={props.showChatBar}
       {...componentProp}
     />
   )
