@@ -122,7 +122,7 @@ export const CircuitJsonPreview = ({
   onRerunWithDebug,
   solverEvents,
   showChatBar = true,
-  agentUrl = "ws://localhost:8080/agent",
+  agentUrl = "ws://localhost:8082",
 }: PreviewContentProps) => {
   useStyles()
 

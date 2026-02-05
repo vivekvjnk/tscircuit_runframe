@@ -1,23 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from "react"
+import type { AgentMessage } from "./agent-websocket-types"
 
-export type MessageType =
-    | "USER_PROMPT"
-    | "DOCUMENT_UPLOAD"
-    | "CANCEL_TASK"
-    | "AGENT_THINKING"
-    | "EVALUATION_STATUS"
-    | "CODE_GENERATED"
-    | "FILE_SYNC_COMPLETE"
-    | "ERROR"
+export type { MessageType, AgentMessage } from "./agent-websocket-types"
 
-export interface AgentMessage {
-    type: MessageType
-    payload?: any
-}
-
-export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => void) => {
+export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => void, onOpen?: (send: (msg: AgentMessage) => void) => void) => {
     const [status, setStatus] = useState<"connecting" | "open" | "closed" | "error">("closed")
     const socketRef = useRef<WebSocket | null>(null)
+
+    const send = useCallback((msg: AgentMessage) => {
+        if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(JSON.stringify(msg))
+        } else {
+            console.warn("WebSocket is not open. Cannot send message:", msg)
+        }
+    }, [])
 
     useEffect(() => {
         if (!url) return
@@ -30,6 +26,9 @@ export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => vo
             ws.onopen = () => {
                 setStatus("open")
                 console.log("WebSocket connected to agent server")
+                if (onOpen) {
+                    onOpen(send)
+                }
             }
 
             ws.onmessage = (event) => {
@@ -44,7 +43,6 @@ export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => vo
             ws.onclose = () => {
                 setStatus("closed")
                 console.log("WebSocket disconnected from agent server")
-                // Optionally reconnect after a delay
             }
 
             ws.onerror = (err) => {
@@ -58,15 +56,7 @@ export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => vo
         return () => {
             socketRef.current?.close()
         }
-    }, [url, onMessage])
-
-    const send = useCallback((msg: AgentMessage) => {
-        if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(JSON.stringify(msg))
-        } else {
-            console.warn("WebSocket is not open. Cannot send message:", msg)
-        }
-    }, [])
+    }, [url, onMessage, onOpen])
 
     return { status, send }
 }
