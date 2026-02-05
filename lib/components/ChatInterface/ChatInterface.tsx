@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react"
 import { Search, Send, X, MessageSquare, Sparkles, Loader2, CheckCircle2, AlertCircle, Terminal, Image as ImageIcon, Pin, PinOff, ChevronUp, ChevronDown, Minimize2 } from "lucide-react"
 import { cn } from "lib/utils"
-import { useAgentSocket, type AgentMessage } from "lib/hooks/use-agent-socket"
+import { useAgentSocket, type WebSocketMessage, type AgentMessage } from "lib/hooks/use-agent-socket"
 
 interface Message {
     role: "user" | "assistant"
@@ -10,8 +10,17 @@ interface Message {
     image?: string
 }
 
+const createEvent = (type: any, payload: any, artifactId: string | null = null): AgentMessage => ({
+    id: crypto.randomUUID(),
+    type,
+    artifact_id: artifactId,
+    timestamp: new Date().toISOString(),
+    source: "runtime",
+    payload
+})
+
 export const ChatInterface = ({
-    agentUrl = "ws://localhost:8082"
+    agentUrl = "ws://localhost:8080"
 }: {
     agentUrl?: string
 }) => {
@@ -25,6 +34,7 @@ export const ChatInterface = ({
     const [isPinned, setIsPinned] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const [isAgentConnected, setIsAgentConnected] = useState(false)
+    const [currentArtifactId, setCurrentArtifactId] = useState<string | null>(null)
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -55,62 +65,82 @@ export const ChatInterface = ({
 
     const effectiveShowHistory = !isMinimized && (isHistoryOpen || isFocused || isPinned)
 
-    const handleAgentMessage = useCallback((msg: AgentMessage) => {
-        console.log("Received agent message:", msg)
+    const handleAgentMessage = useCallback((msg: WebSocketMessage) => {
+        console.log("Received message:", msg)
 
-        switch (msg.type) {
-            case "AGENT_CONNECTED":
-                setIsAgentConnected(true)
-                break
-            case "AGENT_DISCONNECTED":
-                setIsAgentConnected(false)
-                break
-            case "AGENT_THINKING":
-                setAgentStatus("thinking")
-                setMessages(prev => {
-                    const last = prev[prev.length - 1]
-                    if (last && last.role === "assistant" && last.status === "thinking") {
-                        return [...prev.slice(0, -1), { ...last, content: msg.payload?.text || last.content }]
-                    }
-                    return [...prev, { role: "assistant", content: msg.payload?.text || "Thinking...", status: "thinking" }]
-                })
-                break
+        // Presence Handling (Transport-only)
+        if (msg.type === "AGENT_CONNECTED") {
+            setIsAgentConnected(true)
+            return
+        }
+        if (msg.type === "AGENT_DISCONNECTED") {
+            setIsAgentConnected(false)
+            return
+        }
 
-            case "EVALUATION_STATUS":
-                setAgentStatus("evaluating")
-                setMessages(prev => {
-                    const last = prev[prev.length - 1]
-                    if (last && last.role === "assistant" && (last.status === "thinking" || last.status === "evaluating")) {
-                        return [...prev.slice(0, -1), { ...last, content: msg.payload?.text || "Evaluating...", status: "evaluating" }]
-                    }
-                    return [...prev, { role: "assistant", content: msg.payload?.text || "Evaluating...", status: "evaluating" }]
-                })
+        const agentMsg = msg as AgentMessage
+        if (agentMsg.artifact_id) {
+            setCurrentArtifactId(agentMsg.artifact_id)
+        }
+
+        switch (agentMsg.type) {
+            case "STATE_TRANSITION":
+                // Rule: derive status from phase/state
+                if (agentMsg.payload?.to === "THINKING") {
+                    setAgentStatus("thinking")
+                } else if (agentMsg.payload?.to === "IDLE") {
+                    setAgentStatus("idle")
+                }
                 break
 
-            case "FILE_SYNC_COMPLETE":
+            case "EVALUATION_UPDATE":
+                // Rule: derive spinner/terminal from status=running
+                if (agentMsg.payload?.status === "running") {
+                    setAgentStatus("evaluating")
+                    setMessages(prev => {
+                        const last = prev[prev.length - 1]
+                        if (last && last.role === "assistant" && (last.status === "thinking" || last.status === "evaluating")) {
+                            return [...prev.slice(0, -1), { ...last, content: agentMsg.payload?.text || "Evaluating...", status: "evaluating" }]
+                        }
+                        return [...prev, { role: "assistant", content: agentMsg.payload?.text || "Evaluating...", status: "evaluating" }]
+                    })
+                } else if (agentMsg.payload?.status === "pass") {
+                    setAgentStatus("idle")
+                    // Success is typically handled by ARTIFACT_UPDATED but can be noted here
+                }
+                break
+
+            case "ARTIFACT_UPDATED":
+                // Rule: Show success/update
                 setAgentStatus("idle")
                 setMessages(prev => {
                     const last = prev[prev.length - 1]
+                    const content = agentMsg.payload?.summary || "Changes applied successfully!"
                     if (last && last.role === "assistant" && (last.status === "thinking" || last.status === "evaluating")) {
-                        return [...prev.slice(0, -1), { ...last, content: "Changes applied successfully!", status: "completed" }]
+                        return [...prev.slice(0, -1), { ...last, content, status: "completed" }]
                     }
-                    return [...prev, { role: "assistant", content: "Changes applied successfully!", status: "completed" }]
+                    return [...prev, { role: "assistant", content, status: "completed" }]
                 })
+                break
+
+            case "AUTHORITY_REQUIRED":
+                // Rule: Blocking prompt
+                setAgentStatus("idle")
+                setMessages(prev => [...prev, {
+                    role: "assistant",
+                    content: agentMsg.payload?.question || "Action required.",
+                    status: "thinking" // Or a new status for "waiting"
+                }])
                 break
 
             case "ERROR":
                 setAgentStatus("failed")
-                setMessages(prev => [...prev, { role: "assistant", content: msg.payload?.message || "An error occurred.", status: "error" }])
-                break
-
-            case "CODE_GENERATED":
-                // Optional: Show code in chat or handle separately
-                console.log("Code generated:", msg.payload?.code)
+                setMessages(prev => [...prev, { role: "assistant", content: agentMsg.payload?.message || "An error occurred.", status: "error" }])
                 break
         }
     }, [])
 
-    const onOpen = useCallback((send: (msg: AgentMessage) => void) => {
+    const onOpen = useCallback((send: (msg: WebSocketMessage) => void) => {
         send({ type: "IDENTIFY", payload: { role: "ui" } })
     }, [])
 
@@ -130,7 +160,7 @@ export const ChatInterface = ({
         if (wsStatus !== "open") {
             setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "I'm currently disconnected from the AI server. Please ensure the backend is running and try again.",
+                content: "I'm currently disconnected from the relay server. Please try again later.",
                 status: "error"
             }])
             return
@@ -139,16 +169,17 @@ export const ChatInterface = ({
         if (!isAgentConnected) {
             setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "No agent is currently connected to the server. Please wait for an agent to connect.",
+                content: "No agent is currently connected. Please wait for an agent.",
                 status: "error"
             }])
             return
         }
 
-        send({
-            type: "USER_PROMPT",
-            payload: { prompt: userMsg }
-        })
+        // Rule: Emit HUMAN_INPUT
+        send(createEvent("HUMAN_INPUT", {
+            content: userMsg,
+            intent: "freeform"
+        }, currentArtifactId))
     }
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,7 +189,7 @@ export const ChatInterface = ({
         if (!isAgentConnected) {
             setMessages(prev => [...prev, {
                 role: "assistant",
-                content: "No agent is currently connected. Cannot upload document.",
+                content: "No agent is currently connected. Cannot upload reference.",
                 status: "error"
             }])
             return
@@ -176,15 +207,13 @@ export const ChatInterface = ({
             }])
             setIsHistoryOpen(true)
 
-            // Send via WebSocket
-            send({
-                type: "DOCUMENT_UPLOAD",
-                payload: {
-                    base64: base64.split(',')[1], // remove data:image/png;base64,
-                    fileName: file.name,
-                    fileType: file.type
-                }
-            })
+            // Rule: Emit REFERENCE_UPLOADED
+            send(createEvent("REFERENCE_UPLOADED", {
+                reference_id: crypto.randomUUID(),
+                reference_type: file.type.includes('image') ? 'image' : (file.type.includes('pdf') ? 'pdf' : 'other'),
+                filename: file.name,
+                base64: base64.split(',')[1] // Still need to carry data for the agent
+            }, currentArtifactId))
         }
         reader.readAsDataURL(file)
 
@@ -192,6 +221,15 @@ export const ChatInterface = ({
         if (fileInputRef.current) {
             fileInputRef.current.value = ""
         }
+    }
+
+    const handleInterrupt = () => {
+        if (!isAgentConnected) return
+
+        // Rule: Emit INTERRUPT_REQUEST
+        send(createEvent("INTERRUPT_REQUEST", {
+            reason: "user_requested_stop"
+        }, currentArtifactId))
     }
 
     return (
@@ -279,11 +317,11 @@ export const ChatInterface = ({
                             <div className="rf-flex rf-items-center rf-gap-2">
                                 <Loader2 className="rf-w-3.5 rf-h-3.5 rf-animate-spin rf-text-blue-600" />
                                 <span className="rf-text-xs rf-font-medium rf-text-blue-700">
-                                    {agentStatus === "thinking" ? "Agent is thinking..." : "Validating circuit..."}
+                                    {agentStatus === "thinking" ? "Agent is processing..." : "Validating changes..."}
                                 </span>
                             </div>
                             <button
-                                onClick={() => send({ type: "CANCEL_TASK" })}
+                                onClick={handleInterrupt}
                                 className="rf-text-xs rf-text-blue-600 hover:rf-text-blue-800 rf-font-semibold"
                             >
                                 Stop

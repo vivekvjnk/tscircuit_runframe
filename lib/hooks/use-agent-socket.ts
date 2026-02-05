@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from "react"
-import type { AgentMessage } from "./agent-websocket-types"
+import type { WebSocketMessage } from "./agent-websocket-types"
 
-export type { MessageType, AgentMessage } from "./agent-websocket-types"
+export type { EventType, AgentMessage, WebSocketMessage } from "./agent-websocket-types"
 
-export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => void, onOpen?: (send: (msg: AgentMessage) => void) => void) => {
+export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) => void, onOpen?: (send: (msg: WebSocketMessage) => void) => void) => {
     const [status, setStatus] = useState<"connecting" | "open" | "closed" | "error">("closed")
     const socketRef = useRef<WebSocket | null>(null)
 
-    const send = useCallback((msg: AgentMessage) => {
+    const send = useCallback((msg: WebSocketMessage) => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
             socketRef.current.send(JSON.stringify(msg))
         } else {
@@ -33,7 +33,7 @@ export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => vo
 
             ws.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data) as AgentMessage
+                    const data = JSON.parse(event.data) as WebSocketMessage
                     onMessage(data)
                 } catch (err) {
                     console.error("Failed to parse WebSocket message", err)
@@ -56,7 +56,7 @@ export const useAgentSocket = (url: string, onMessage: (msg: AgentMessage) => vo
         return () => {
             socketRef.current?.close()
         }
-    }, [url, onMessage, onOpen])
+    }, [url, onMessage, onOpen, send])
 
     return { status, send }
 }

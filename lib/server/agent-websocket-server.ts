@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws"
-import type { AgentHandler, AgentMessage } from "../hooks/agent-websocket-types"
+import type { AgentHandler, WebSocketMessage } from "../hooks/agent-websocket-types"
 import type { Server } from "http"
 
 export interface AgentWebSocketServerOptions {
@@ -21,7 +21,7 @@ export class AgentWebSocketServer {
         this.createHandler = createHandler
     }
 
-    start(options: AgentWebSocketServerOptions = { port: 8082 }) {
+    start(options: AgentWebSocketServerOptions = { port: 8080 }) {
         this.wss = new WebSocketServer(options)
 
         this.wss.on("connection", (ws: WebSocket) => {
@@ -29,7 +29,7 @@ export class AgentWebSocketServer {
 
             const handler = this.createHandler()
 
-            const send = (msg: AgentMessage) => {
+            const send = (msg: WebSocketMessage) => {
                 if (ws.readyState === WebSocket.OPEN) {
                     ws.send(JSON.stringify(msg))
                 }
@@ -41,14 +41,16 @@ export class AgentWebSocketServer {
 
             ws.on("message", async (data: any) => {
                 try {
-                    const msg = JSON.parse(data.toString()) as AgentMessage
+                    const msg = JSON.parse(data.toString()) as WebSocketMessage
                     await handler.onMessage(msg, send)
                 } catch (err) {
                     console.error("AgentWebSocketServer: Error handling message", err)
-                    send({
+                    // We don't follow the mandatory schema for this internal error relay 
+                    // but we can if we want. For now, just a raw message is okay for the relay.
+                    ws.send(JSON.stringify({
                         type: "ERROR",
                         payload: { message: "Internal server error handling message" }
-                    })
+                    }))
                 }
             })
 
@@ -59,9 +61,9 @@ export class AgentWebSocketServer {
                 }
             })
 
-            ws.on("error", (err) => {
+            ws.onerror = (err: any) => {
                 console.error("AgentWebSocketServer: WebSocket error", err)
-            })
+            }
         })
 
         if (options.port) {
@@ -87,7 +89,7 @@ let globalServer: AgentWebSocketServer | null = null
  */
 export const ensureAgentWebSocketServer = (
     createHandler: () => AgentHandler,
-    options: AgentWebSocketServerOptions = { port: 8082 }
+    options: AgentWebSocketServerOptions = { port: 8080 }
 ) => {
     if (globalServer) return globalServer
 
@@ -101,7 +103,7 @@ export const ensureAgentWebSocketServer = (
  */
 export const startAgentWebSocketServer = (
     createHandler: () => AgentHandler,
-    options: AgentWebSocketServerOptions = { port: 8082 }
+    options: AgentWebSocketServerOptions = { port: 8080 }
 ) => {
     return ensureAgentWebSocketServer(createHandler, options)
 }
