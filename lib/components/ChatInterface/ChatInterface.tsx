@@ -11,7 +11,7 @@ interface Message {
 }
 
 export const ChatInterface = ({
-    agentUrl = "ws://localhost:8080/agent"
+    agentUrl = "ws://localhost:8082"
 }: {
     agentUrl?: string
 }) => {
@@ -24,6 +24,8 @@ export const ChatInterface = ({
     const [agentStatus, setAgentStatus] = useState<"idle" | "thinking" | "evaluating" | "failed">("idle")
     const [isPinned, setIsPinned] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
+    const [isAgentConnected, setIsAgentConnected] = useState(false)
+
     const scrollRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
@@ -57,6 +59,12 @@ export const ChatInterface = ({
         console.log("Received agent message:", msg)
 
         switch (msg.type) {
+            case "AGENT_CONNECTED":
+                setIsAgentConnected(true)
+                break
+            case "AGENT_DISCONNECTED":
+                setIsAgentConnected(false)
+                break
             case "AGENT_THINKING":
                 setAgentStatus("thinking")
                 setMessages(prev => {
@@ -102,7 +110,11 @@ export const ChatInterface = ({
         }
     }, [])
 
-    const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage)
+    const onOpen = useCallback((send: (msg: AgentMessage) => void) => {
+        send({ type: "IDENTIFY", payload: { role: "ui" } })
+    }, [])
+
+    const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
@@ -124,6 +136,15 @@ export const ChatInterface = ({
             return
         }
 
+        if (!isAgentConnected) {
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: "No agent is currently connected to the server. Please wait for an agent to connect.",
+                status: "error"
+            }])
+            return
+        }
+
         send({
             type: "USER_PROMPT",
             payload: { prompt: userMsg }
@@ -133,6 +154,15 @@ export const ChatInterface = ({
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file || wsStatus !== "open") return
+
+        if (!isAgentConnected) {
+            setMessages(prev => [...prev, {
+                role: "assistant",
+                content: "No agent is currently connected. Cannot upload document.",
+                status: "error"
+            }])
+            return
+        }
 
         const reader = new FileReader()
         reader.onload = (event) => {
@@ -180,8 +210,10 @@ export const ChatInterface = ({
                             <div>
                                 <h3 className="rf-font-semibold rf-text-sm rf-text-gray-800">tscircuit AI Assistant</h3>
                                 <div className="rf-flex rf-items-center rf-gap-1.5">
-                                    <div className={cn("rf-w-1.5 rf-h-1.5 rf-rounded-full", wsStatus === "open" ? "rf-bg-green-500" : "rf-bg-red-500")} />
-                                    <span className="rf-text-[10px] rf-text-gray-500 rf-uppercase rf-tracking-wider">{wsStatus}</span>
+                                    <div className={cn("rf-w-1.5 rf-h-1.5 rf-rounded-full", wsStatus === "open" ? (isAgentConnected ? "rf-bg-green-500" : "rf-bg-yellow-500") : "rf-bg-red-500")} />
+                                    <span className="rf-text-[10px] rf-text-gray-500 rf-uppercase rf-tracking-wider">
+                                        {wsStatus === "open" ? (isAgentConnected ? "Agent Ready" : "Waiting for Agent") : "Disconnected"}
+                                    </span>
                                 </div>
                             </div>
                         </div>

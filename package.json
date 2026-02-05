@@ -8,7 +8,8 @@
     "./preview": "./dist/preview.js",
     "./runner": "./dist/runner.js",
     "./standalone": "./dist/standalone.min.js",
-    "./standalone-preview": "./dist/standalone-preview.min.js"
+    "./standalone-preview": "./dist/standalone-preview.min.js",
+    "./server": "./dist/server.js"
   },
   "files": [
     "dist"
@@ -16,7 +17,7 @@
   "scripts": {
     "start": "bun run build:css && concurrently 'bun run cosmos' 'bun run build:css:watch'",
     "build": "bun run build:css && bun run build:standalone && bun run build:standalone-preview && bun run build:lib",
-    "build:lib": "tsup-node lib/preview.ts lib/runner.ts --external react-query schematic-symbols lucide-react circuit-to-svg @tscircuit/props --platform browser --format esm --dts",
+    "build:lib": "tsup-node lib/preview.ts lib/runner.ts --external react-query schematic-symbols lucide-react circuit-to-svg @tscircuit/props --platform browser --format esm --dts && tsup-node lib/server.ts --platform node --format esm,cjs --dts",
     "build:css": "bun run scripts/build-css.ts",
     "build:css:watch": "chokidar 'lib/components/**/*.tsx' -c 'bun run build:css'",
     "build:site": "cosmos-export && bun run build:iframe",
@@ -115,9 +116,11 @@
     "tscircuit": "^0.0.1221",
     "tsup": "^8.3.5",
     "vite": "^7.1.2",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "@types/ws": "^8.18.1"
   },
   "dependencies": {
-    "@tscircuit/solver-utils": "^0.0.7"
+    "@tscircuit/solver-utils": "^0.0.7",
+    "ws": "^8.19.0"
   }
 }

@@ -1,0 +1,107 @@
+import { WebSocketServer, WebSocket } from "ws"
+import type { AgentHandler, AgentMessage } from "../hooks/agent-websocket-types"
+import type { Server } from "http"
+
+export interface AgentWebSocketServerOptions {
+    port?: number
+    server?: Server
+    path?: string
+}
+
+/**
+ * A modular WebSocket server for the Agentic Chatbox.
+ * It uses a handler factory to create a new handler for each connection,
+ * allowing for dependency injection and decoupled state management.
+ */
+export class AgentWebSocketServer {
+    private wss: WebSocketServer | null = null
+    private createHandler: () => AgentHandler
+
+    constructor(createHandler: () => AgentHandler) {
+        this.createHandler = createHandler
+    }
+
+    start(options: AgentWebSocketServerOptions = { port: 8082 }) {
+        this.wss = new WebSocketServer(options)
+
+        this.wss.on("connection", (ws: WebSocket) => {
+            console.log("AgentWebSocketServer: New client connected")
+
+            const handler = this.createHandler()
+
+            const send = (msg: AgentMessage) => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(msg))
+                }
+            }
+
+            if (handler.onConnect) {
+                handler.onConnect(send)
+            }
+
+            ws.on("message", async (data: any) => {
+                try {
+                    const msg = JSON.parse(data.toString()) as AgentMessage
+                    await handler.onMessage(msg, send)
+                } catch (err) {
+                    console.error("AgentWebSocketServer: Error handling message", err)
+                    send({
+                        type: "ERROR",
+                        payload: { message: "Internal server error handling message" }
+                    })
+                }
+            })
+
+            ws.on("close", () => {
+                console.log("AgentWebSocketServer: Client disconnected")
+                if (handler.onDisconnect) {
+                    handler.onDisconnect()
+                }
+            })
+
+            ws.on("error", (err) => {
+                console.error("AgentWebSocketServer: WebSocket error", err)
+            })
+        })
+
+        if (options.port) {
+            console.log(`Agent WebSocket Server started on ws://localhost:${options.port}${options.path || ""}`)
+        } else if (options.server) {
+            console.log(`Agent WebSocket Server attached to HTTP server at path: ${options.path || "/"}`)
+        }
+    }
+
+    stop() {
+        if (this.wss) {
+            this.wss.close()
+            this.wss = null
+        }
+    }
+}
+
+let globalServer: AgentWebSocketServer | null = null
+
+/**
+ * Ensures that an Agent WebSocket server is running.
+ * If a server is already running, it returns the existing instance.
+ */
+export const ensureAgentWebSocketServer = (
+    createHandler: () => AgentHandler,
+    options: AgentWebSocketServerOptions = { port: 8082 }
+) => {
+    if (globalServer) return globalServer
+
+    globalServer = new AgentWebSocketServer(createHandler)
+    globalServer.start(options)
+    return globalServer
+}
+
+/**
+ * Helper function to create and start an Agent WebSocket server.
+ */
+export const startAgentWebSocketServer = (
+    createHandler: () => AgentHandler,
+    options: AgentWebSocketServerOptions = { port: 8082 }
+) => {
+    return ensureAgentWebSocketServer(createHandler, options)
+}
