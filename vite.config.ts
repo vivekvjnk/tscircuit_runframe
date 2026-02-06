@@ -13,7 +13,7 @@ const fileServerHandler = getNodeHandler(winterspecBundle as any, {})
 const fakeRegistryHandler = getNodeHandler(fakeRegistryBundle as any, {
   middleware: [
     (req, ctx, next) => {
-      ;(ctx as any).db = registryDb
+      ; (ctx as any).db = registryDb
       return next(req, ctx)
     },
   ],
