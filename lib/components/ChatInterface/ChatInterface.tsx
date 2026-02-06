@@ -20,7 +20,7 @@ const createEvent = (type: any, payload: any, artifactId: string | null = null):
 })
 
 export const ChatInterface = ({
-    agentUrl = "ws://localhost:8080"
+    agentUrl = "ws://localhost:1080"
 }: {
     agentUrl?: string
 }) => {
