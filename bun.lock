@@ -6,7 +6,6 @@
       "name": "@tscircuit/runframe",
       "dependencies": {
         "@tscircuit/solver-utils": "^0.0.7",
-        "@types/ws": "^8.18.1",
         "ws": "^8.19.0",
       },
       "devDependencies": {
@@ -42,6 +41,7 @@
         "@types/react": "^19.1.10",
         "@types/react-dom": "^19.1.7",
         "@types/three": "^0.179.0",
+        "@types/ws": "^8.18.1",
         "@vitejs/plugin-react": "^5.0.0",
         "autoprefixer": "^10.4.20",
         "chokidar-cli": "^3.0.0",
