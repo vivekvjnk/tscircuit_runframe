@@ -22,7 +22,7 @@ export interface AgentMessage {
     type: EventType
     artifact_id: string | null
     timestamp: string // ISO-8601
-    source: "runtime" | "backend"
+    source: "runtime" | "backend" 
     payload: any
 }
 

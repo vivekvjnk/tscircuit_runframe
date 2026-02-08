@@ -19,13 +19,14 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
         if (!url) return
 
         const connect = () => {
+            console.log(`[useAgentSocket] Attempting to connect to ${url}...`)
             setStatus("connecting")
             const ws = new WebSocket(url)
             socketRef.current = ws
 
             ws.onopen = () => {
                 setStatus("open")
-                console.log("WebSocket connected to agent server")
+                console.log(`[useAgentSocket] Successfully connected to ${url}`)
                 if (onOpen) {
                     onOpen(send)
                 }
@@ -34,20 +35,21 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data) as WebSocketMessage
+                    console.debug("[useAgentSocket] Received message:", data)
                     onMessage(data)
                 } catch (err) {
-                    console.error("Failed to parse WebSocket message", err)
+                    console.error("[useAgentSocket] Failed to parse WebSocket message", err, event.data)
                 }
             }
 
-            ws.onclose = () => {
+            ws.onclose = (event) => {
                 setStatus("closed")
-                console.log("WebSocket disconnected from agent server")
+                console.log(`[useAgentSocket] Disconnected from ${url}. Code: ${event.code}, Reason: ${event.reason}`)
             }
 
             ws.onerror = (err) => {
                 setStatus("error")
-                console.error("WebSocket error:", err)
+                console.error(`[useAgentSocket] WebSocket error connecting to ${url}:`, err)
             }
         }
 
