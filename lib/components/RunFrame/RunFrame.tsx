@@ -731,6 +731,7 @@ export const RunFrame = (props: RunFrameProps) => {
         onChangeShowSchematicDebugGrid={setShowSchematicDebugGrid}
         onChangeShowSchematicPorts={setShowSchematicPorts}
         showChatBar={props.showChatBar}
+        agentUrl={props.agentUrl}
       />
     </ErrorBoundary>
   )

@@ -242,7 +242,7 @@ export const CircuitJsonPreview = ({
     >
       <div
         className={cn(
-          "rf-md:sticky rf-md:top-2 rf-h-full",
+          "rf-md:sticky rf-md:top-2 rf-h-full rf-relative",
           isFullScreen &&
           "rf-fixed rf-top-0 rf-left-0 rf-w-full rf-h-full rf-bg-white rf-overflow-hidden",
         )}

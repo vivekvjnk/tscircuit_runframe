@@ -9,6 +9,7 @@ export const RunFrameForCli = (props: {
   scenarioSelectorContent?: React.ReactNode
   workerBlobUrl?: string
   enableFetchProxy?: boolean
+  agentUrl?: string
 }) => {
   const [shouldLoadLatestEval, setLoadLatestEval] = useLocalStorageState(
     "load-latest-eval",
@@ -50,6 +51,7 @@ export const RunFrameForCli = (props: {
         onLoginRequired={openLoginDialog}
         onMainComponentPathChange={updateMainComponentHash}
         showChatBar={true}
+        agentUrl={props.agentUrl}
         leftHeaderContent={
           <div className="rf-flex rf-items-center rf-justify-between">
             <FileMenuLeftHeader

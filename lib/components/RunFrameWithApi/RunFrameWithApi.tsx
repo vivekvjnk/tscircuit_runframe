@@ -70,6 +70,11 @@ export interface RunFrameWithApiProps {
    * Whether to show the chat bar
    */
   showChatBar?: boolean
+
+  /**
+   * The URL for the agent WebSocket server
+   */
+  agentUrl?: string
 }
 
 export const RunFrameWithApi = (props: RunFrameWithApiProps) => {
@@ -329,6 +334,7 @@ export const RunFrameWithApi = (props: RunFrameWithApiProps) => {
       }}
       onLoginRequired={props.onLoginRequired}
       showChatBar={props.showChatBar}
+      agentUrl={props.agentUrl}
       {...componentProp}
     />
   )
