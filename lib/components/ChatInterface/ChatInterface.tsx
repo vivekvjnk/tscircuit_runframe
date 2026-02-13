@@ -132,6 +132,17 @@ export const ChatInterface = ({
                     status: "thinking" // Or a new status for "waiting"
                 }])
                 break
+                
+            case "HIL_REQUEST":
+                // Code to send message to chatbox with HIL request message
+                console.log("Received HIL_REQUEST:", agentMsg.payload)
+                setAgentStatus("idle")
+                setMessages(prev => [...prev, {
+                    role: "assistant",
+                    content: agentMsg.payload?.message || "Action required.",
+                    status: "thinking" // Or a new status for "waiting"
+                }])
+                break
 
             case "ERROR":
                 setAgentStatus("failed")

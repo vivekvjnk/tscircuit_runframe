@@ -11,6 +11,7 @@ export type EventType =
     | "EVALUATION_UPDATE"
     | "ARTIFACT_UPDATED"
     | "AUTHORITY_REQUIRED"
+    | "HIL_REQUEST"
     | "ERROR"
     // Transport-Only (Relay Layer)
     | "IDENTIFY"
