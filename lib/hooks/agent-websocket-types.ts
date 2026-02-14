@@ -17,13 +17,17 @@ export type EventType =
     | "IDENTIFY"
     | "AGENT_CONNECTED"
     | "AGENT_DISCONNECTED"
+    // Project Initialization
+    | "CREATE_PROJECT"
+    | "PROJECT_CREATED"
+    | "VHL_WORKSPACE_READY"
 
 export interface AgentMessage {
     id: string
     type: EventType
     artifact_id: string | null
     timestamp: string // ISO-8601
-    source: "runtime" | "backend" 
+    source: "runtime" | "backend"
     payload: any
 }
 

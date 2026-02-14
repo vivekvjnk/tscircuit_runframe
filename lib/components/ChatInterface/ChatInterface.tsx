@@ -5,6 +5,7 @@ import { useAgentSocket, type WebSocketMessage, type AgentMessage } from "lib/ho
 import { useChatSession } from "./hooks/useChatSession"
 import { useAgentPresence } from "./hooks/useAgentPresence"
 import { useAgentStatus } from "./hooks/useAgentStatus"
+import type { ProjectUIState } from "./types"
 // Components
 import { ChatWindow } from "./components/ChatWindow"
 import { ChatInputBar } from "./components/ChatInputBar"
@@ -32,6 +33,11 @@ export const ChatInterface = ({
     const [isPinned, setIsPinned] = useState(false)
     const [isFocused, setIsFocused] = useState(false)
     const [currentArtifactId, setCurrentArtifactId] = useState<string | null>(null)
+
+    // Project State
+    const [projectState, setProjectState] = useState<ProjectUIState>("NO_PROJECT")
+    const [projectId, setProjectId] = useState<string | null>(null)
+    const [projectName, setProjectName] = useState<string | null>(null)
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null)
@@ -116,6 +122,18 @@ export const ChatInterface = ({
             case "ERROR":
                 addAssistantMessage(agentMsg.payload?.message || "An error occurred.", "error")
                 break
+
+            case "PROJECT_CREATED":
+                setProjectId(agentMsg.payload?.project_id)
+                setProjectName(agentMsg.payload?.project_name)
+                setProjectState("AGENT_READY")
+                addAssistantMessage("Agent workspace ready.", "completed")
+                break
+
+            case "VHL_WORKSPACE_READY":
+                setProjectState("PROJECT_INITIALIZED")
+                addAssistantMessage("VHL workspace ready.", "completed")
+                break
         }
     }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage])
 
@@ -126,6 +144,14 @@ export const ChatInterface = ({
     const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
 
     // Actions
+    const handleCreateProject = (name: string) => {
+        setProjectName(name)
+        setProjectState("CREATING_PROJECT")
+        setIsHistoryOpen(true) // Ensure we see the menu
+        send(createEvent("CREATE_PROJECT", { project_name: name }, null))
+        addAssistantMessage("Creating project...", "thinking")
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!query.trim()) return
@@ -200,6 +226,10 @@ export const ChatInterface = ({
                     onTogglePin={() => setIsPinned(!isPinned)}
                     onClose={() => setIsHistoryOpen(false)}
                     onInterrupt={handleInterrupt}
+                    projectState={projectState}
+                    onCreateProject={handleCreateProject}
+                    projectId={projectId}
+                    projectName={projectName}
                 />
             )}
 
@@ -236,7 +266,7 @@ export const ChatInterface = ({
                         onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
                         isHistoryOpen={isHistoryOpen || isFocused || isPinned}
                         inputRef={inputRef}
-                        disabled={false}
+                        disabled={projectState !== "PROJECT_INITIALIZED"}
                     />
                 )}
             </div>

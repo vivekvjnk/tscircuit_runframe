@@ -1,4 +1,11 @@
-export type AgentStatus = "idle" | "thinking" | "evaluating" | "failed"
+export type AgentStatus = "idle" | "thinking" | "evaluating" | "failed" | "completed"
+
+export type ProjectUIState =
+    | "NO_PROJECT"
+    | "CREATING_PROJECT"
+    | "AGENT_READY"
+    | "VHL_READY"
+    | "PROJECT_INITIALIZED"
 
 export interface Message {
     role: "user" | "assistant"

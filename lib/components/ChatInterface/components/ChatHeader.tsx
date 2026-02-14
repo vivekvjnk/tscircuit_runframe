@@ -7,7 +7,7 @@ interface ChatHeaderProps {
     onTogglePin: () => void
     onClose: () => void
     isAgentConnected: boolean
-    wsStatus: "connecting" | "open" | "closed"
+    wsStatus: "connecting" | "open" | "closed" | "error"
 }
 
 export const ChatHeader = ({ isPinned, onTogglePin, onClose, isAgentConnected, wsStatus }: ChatHeaderProps) => {
