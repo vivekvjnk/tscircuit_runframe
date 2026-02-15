@@ -130,6 +130,20 @@ export const ChatInterface = ({
                 addAssistantMessage("Agent workspace ready.", "completed")
                 break
 
+            case "DEV_SERVER_READY":
+                console.log("Dev server ready! Reloading...");
+                setTimeout(() => {
+                    const targetUrl = (msg as AgentMessage).payload?.url;
+                    if (targetUrl) {
+                        window.location.href = targetUrl;
+                        // Always reload to ensure fresh connection to the dev server
+                        window.location.reload();
+                    } else {
+                        window.location.reload();
+                    }
+                }, 1000);
+                break;
+
             case "VHL_WORKSPACE_READY":
                 setProjectState("PROJECT_INITIALIZED")
                 addAssistantMessage("VHL workspace ready.", "completed")
