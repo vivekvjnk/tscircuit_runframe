@@ -10,6 +10,6 @@ export type ProjectUIState =
 export interface Message {
     role: "user" | "assistant"
     content: string
-    status?: "thinking" | "evaluating" | "completed" | "error"
+    status?: AgentStatus
     image?: string
 }

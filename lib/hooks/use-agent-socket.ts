@@ -9,6 +9,7 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
 
     const send = useCallback((msg: WebSocketMessage) => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
+            console.debug("[useAgentSocket] Sending message:", msg)
             socketRef.current.send(JSON.stringify(msg))
         } else {
             console.warn("WebSocket is not open. Cannot send message:", msg)

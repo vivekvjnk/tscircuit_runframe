@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react"
-import { AgentStatus } from "../types"
-import { WebSocketMessage, AgentMessage } from "lib/hooks/use-agent-socket"
+import type { AgentStatus } from "../types"
+import type { WebSocketMessage, AgentMessage } from "lib/hooks/use-agent-socket"
 
 export const useAgentStatus = () => {
     const [agentStatus, setAgentStatus] = useState<AgentStatus>("idle")

@@ -1,20 +1,20 @@
-import { useState } from "react"
-import { Message, AgentStatus } from "../types"
+import { useState, useCallback } from "react"
+import type { Message, AgentStatus } from "../types"
 
 export const useChatSession = () => {
     const [messages, setMessages] = useState<Message[]>([
         { role: "assistant", content: "Hello! How can I help you with your circuit design today?" }
     ])
 
-    const addUserMessage = (content: string, image?: string) => {
+    const addUserMessage = useCallback((content: string, image?: string) => {
         setMessages(prev => [...prev, { role: "user", content, image }])
-    }
+    }, [])
 
-    const addAssistantMessage = (content: string, status?: AgentStatus) => {
+    const addAssistantMessage = useCallback((content: string, status?: AgentStatus) => {
         setMessages(prev => [...prev, { role: "assistant", content, status }])
-    }
+    }, [])
 
-    const updateLastAssistantMessage = (content: string, status?: AgentStatus) => {
+    const updateLastAssistantMessage = useCallback((content: string, status?: AgentStatus) => {
         setMessages(prev => {
             const last = prev[prev.length - 1]
             if (last && last.role === "assistant") {
@@ -25,11 +25,11 @@ export const useChatSession = () => {
             // If no assistant message to update, add new one
             return [...prev, { role: "assistant", content, status }]
         })
-    }
+    }, [])
 
-    const setError = (content: string) => {
-        setMessages(prev => [...prev, { role: "assistant", content, status: "error" }])
-    }
+    const setError = useCallback((content: string) => {
+        setMessages(prev => [...prev, { role: "assistant", content, status: "failed" }])
+    }, [])
 
     return {
         messages,
