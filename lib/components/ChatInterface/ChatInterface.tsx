@@ -148,11 +148,29 @@ export const ChatInterface = ({
                 setProjectState("PROJECT_INITIALIZED")
                 addAssistantMessage("VHL workspace ready.", "completed")
                 break
+
+            case "SYSTEM_STATE":
+                // @ts-ignore
+                const { state, project_id, project_name } = agentMsg.payload
+                console.log("Restoring system state:", agentMsg.payload)
+                if (state === "PROJECT_INITIALIZED" && project_id) {
+                    setProjectId(project_id)
+                    setProjectName(project_name)
+                    setProjectState("PROJECT_INITIALIZED")
+                } else {
+                    setProjectState("NO_PROJECT")
+                    setProjectId(null)
+                    setProjectName(null)
+                }
+                break
         }
     }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage])
 
     const onOpen = useCallback((send: (msg: WebSocketMessage) => void) => {
         send({ type: "IDENTIFY", payload: { role: "ui" } })
+
+        // Request current system state to restore session
+        send(createEvent("GET_SYSTEM_STATE", {}, null))
     }, [])
 
     const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
