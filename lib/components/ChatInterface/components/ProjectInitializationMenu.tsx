@@ -44,6 +44,7 @@ export const ProjectInitializationMenu = ({
        - AGENT_READY: Show "Agent workspace ready."
        - VHL_READY / PROJECT_INITIALIZED: Show "VHL workspace ready." + Upload buttons
     */
+    console.log("isSynthesizable: ",isSynthesizable)
 
     return (
         <div className="rf-flex rf-flex-col rf-items-center rf-justify-center rf-h-full rf-p-6 rf-gap-4 rf-text-gray-600 rf-bg-white rf-overflow-y-auto rf-custom-scrollbar">
@@ -158,13 +159,17 @@ export const ProjectInitializationMenu = ({
 
                     {isSynthesizable && (
                         <button
+                            type="button"
                             onClick={onSynthesize}
-                            className="rf-w-full rf-px-4 rf-py-4 rf-bg-gradient-to-br rf-from-blue-600 rf-to-indigo-700 rf-text-white rf-rounded-2xl hover:rf-shadow-blue-200 hover:rf-shadow-xl rf-transition-all rf-flex rf-items-center rf-justify-center rf-gap-3 rf-group rf-border-none rf-cursor-pointer"
+                            className="w-full px-4 py-3 bg-blue-700 text-white rounded-lg border border-blue-800 hover:bg-blue-800 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-sm"
                         >
-                            <span className="rf-text-xl group-hover:rf-scale-125 rf-transition-transform">🧠</span>
-                            <div className="rf-flex rf-flex-col rf-items-start">
-                                <span className="rf-font-bold rf-text-sm">Synthesize Circuit</span>
-                                <span className="rf-text-[10px] rf-opacity-80">Start ANA Pipeline</span>
+                            {/* Simple Icon */}
+                            <span className="text-xl" aria-hidden="true">🧠</span>
+                            
+                            {/* Labeling */}
+                            <div className="flex flex-col items-start leading-tight">
+                                <span className="font-semibold text-sm">Synthesize Circuit</span>
+                                <span className="text-[11px] text-blue-100">Start ANA Pipeline</span>
                             </div>
                         </button>
                     )}
