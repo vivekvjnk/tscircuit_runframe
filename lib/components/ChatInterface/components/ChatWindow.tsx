@@ -16,8 +16,12 @@ interface ChatWindowProps {
     onInterrupt: () => void
     projectState: ProjectUIState
     onCreateProject: (name: string) => void
+    onLoadProject: (id: string) => void
+    onSynthesize: () => void
     projectId: string | null
     projectName: string | null
+    availableProjects: string[]
+    isSynthesizable: boolean
 }
 
 export const ChatWindow = ({
@@ -31,8 +35,12 @@ export const ChatWindow = ({
     onInterrupt,
     projectState,
     onCreateProject,
+    onLoadProject,
+    onSynthesize,
     projectId,
-    projectName
+    projectName,
+    availableProjects,
+    isSynthesizable
 }: ChatWindowProps) => {
     /* 
        If we are not initialized, or if we are initialized but still showing the menu (because no chat yet?), 
@@ -87,8 +95,12 @@ export const ChatWindow = ({
                 <ProjectInitializationMenu
                     projectState={projectState}
                     onCreateProject={onCreateProject}
+                    onLoadProject={onLoadProject}
+                    onSynthesize={onSynthesize}
                     projectId={projectId}
                     projectName={projectName}
+                    availableProjects={availableProjects}
+                    isSynthesizable={isSynthesizable}
                 />
             ) : (
                 <MessageList messages={messages} />

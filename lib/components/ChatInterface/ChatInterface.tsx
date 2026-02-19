@@ -35,9 +35,11 @@ export const ChatInterface = ({
     const [currentArtifactId, setCurrentArtifactId] = useState<string | null>(null)
 
     // Project State
-    const [projectState, setProjectState] = useState<ProjectUIState>("NO_PROJECT")
+    const [projectState, setProjectState] = useState<ProjectUIState>("INITIALIZING")
     const [projectId, setProjectId] = useState<string | null>(null)
     const [projectName, setProjectName] = useState<string | null>(null)
+    const [availableProjects, setAvailableProjects] = useState<string[]>([])
+    const [isSynthesizable, setIsSynthesizable] = useState(false)
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null)
@@ -120,14 +122,28 @@ export const ChatInterface = ({
                 break
 
             case "ERROR":
-                addAssistantMessage(agentMsg.payload?.message || "An error occurred.", "error")
+                addAssistantMessage(agentMsg.payload?.message || "An error occurred.", "failed")
                 break
 
             case "PROJECT_CREATED":
                 setProjectId(agentMsg.payload?.project_id)
                 setProjectName(agentMsg.payload?.project_name)
+                setIsSynthesizable(agentMsg.payload?.workspace_info?.is_synthesizable || false)
                 setProjectState("AGENT_READY")
                 addAssistantMessage("Agent workspace ready.", "completed")
+                break
+
+            case "PROJECT_LOADED":
+                setProjectId(agentMsg.payload?.project_id)
+                setProjectName(agentMsg.payload?.project_id)
+                setIsSynthesizable(agentMsg.payload?.workspace_info?.is_synthesizable || false)
+                setProjectState("AGENT_READY")
+                addAssistantMessage("Project loaded successfully.", "completed")
+                break
+
+            case "PROJECTS_LIST":
+                console.log("Received projects list:", agentMsg.payload?.projects)
+                setAvailableProjects(agentMsg.payload?.projects || [])
                 break
 
             case "DEV_SERVER_READY":
@@ -151,16 +167,19 @@ export const ChatInterface = ({
 
             case "SYSTEM_STATE":
                 // @ts-ignore
-                const { state, project_id, project_name } = agentMsg.payload
-                console.log("Restoring system state:", agentMsg.payload)
-                if (state === "PROJECT_INITIALIZED" && project_id) {
+                const { state, project_id, workspace_info } = agentMsg.payload
+                if ((state === "PROJECT_INITIALIZED" || state === "IDLE") && project_id) {
                     setProjectId(project_id)
-                    setProjectName(project_name)
+                    setProjectName(project_id)
+                    if (workspace_info) {
+                        setIsSynthesizable(workspace_info.is_synthesizable || false)
+                    }
                     setProjectState("PROJECT_INITIALIZED")
                 } else {
                     setProjectState("NO_PROJECT")
                     setProjectId(null)
                     setProjectName(null)
+                    setIsSynthesizable(false)
                 }
                 break
         }
@@ -175,6 +194,25 @@ export const ChatInterface = ({
 
     const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
 
+    // Request projects when agent connects if not already done
+    // useEffect(() => {
+    //     if (isAgentConnected && wsStatus === "open" && projectState == "NO_PROJECT" && !projectId) {
+    //         console.log("Sending list_projects: ",projectState, wsStatus, isAgentConnected)
+    //         send(createEvent("LIST_PROJECTS", {}, null))
+    //     }
+    // }, [isAgentConnected, wsStatus, send])
+    useEffect(() => {
+        const canFetchProjects = 
+            isAgentConnected && 
+            wsStatus === "open" && 
+            projectState === "NO_PROJECT"; // This is now a safe gate
+
+        if (canFetchProjects) {
+            console.log("Safe to fetch projects now.");
+            send(createEvent("LIST_PROJECTS", {}, null));
+        }
+    }, [isAgentConnected, wsStatus, projectState, send]);
+
     // Actions
     const handleCreateProject = (name: string) => {
         setProjectName(name)
@@ -182,6 +220,21 @@ export const ChatInterface = ({
         setIsHistoryOpen(true) // Ensure we see the menu
         send(createEvent("CREATE_PROJECT", { project_name: name }, null))
         addAssistantMessage("Creating project...", "thinking")
+    }
+
+    const handleLoadProject = (id: string) => {
+        setProjectId(id)
+        setProjectName(id)
+        setProjectState("CREATING_PROJECT") // Use "CREATING_PROJECT" as a loading state for now
+        setIsHistoryOpen(true)
+        send(createEvent("LOAD_PROJECT", { project_id: id }, null))
+        addAssistantMessage(`Loading project ${id}...`, "thinking")
+    }
+
+    const handleSynthesize = () => {
+        send(createEvent("SYNTHESIZE_CIRCUIT", {}, null))
+        addAssistantMessage("Starting synthesis from loaded artifacts...", "thinking")
+        // Optionally close history to see the result? Or keep it open.
     }
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -260,8 +313,12 @@ export const ChatInterface = ({
                     onInterrupt={handleInterrupt}
                     projectState={projectState}
                     onCreateProject={handleCreateProject}
+                    onLoadProject={handleLoadProject}
+                    onSynthesize={handleSynthesize}
                     projectId={projectId}
                     projectName={projectName}
+                    availableProjects={availableProjects}
+                    isSynthesizable={isSynthesizable}
                 />
             )}
 

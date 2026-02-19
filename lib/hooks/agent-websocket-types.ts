@@ -20,7 +20,15 @@ export type EventType =
     // Project Initialization
     | "CREATE_PROJECT"
     | "PROJECT_CREATED"
+    | "LOAD_PROJECT"
+    | "PROJECT_LOADED"
+    | "LIST_PROJECTS"
+    | "PROJECTS_LIST"
+    | "SYNTHESIZE_CIRCUIT"
     | "VHL_WORKSPACE_READY"
+    // Sync
+    | "SYNC_TRIGGER"
+    | "SYNC_COMPLETE"
     // Dev Server
     | "START_DEV_SERVER"
     | "DEV_SERVER_READY"

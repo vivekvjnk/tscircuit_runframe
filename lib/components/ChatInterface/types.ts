@@ -1,6 +1,7 @@
 export type AgentStatus = "idle" | "thinking" | "evaluating" | "failed" | "completed"
 
 export type ProjectUIState =
+    | "INITIALIZING"   // Checking system state/connecting
     | "NO_PROJECT"
     | "CREATING_PROJECT"
     | "AGENT_READY"
