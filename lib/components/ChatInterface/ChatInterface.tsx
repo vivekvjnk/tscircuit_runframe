@@ -146,19 +146,28 @@ export const ChatInterface = ({
                 setAvailableProjects(agentMsg.payload?.projects || [])
                 break
 
-            case "DEV_SERVER_READY":
-                console.log("Dev server ready! Reloading...");
-                setTimeout(() => {
-                    const targetUrl = (msg as AgentMessage).payload?.url;
-                    if (targetUrl) {
-                        window.location.href = targetUrl;
-                        // Always reload to ensure fresh connection to the dev server
-                        window.location.reload();
-                    } else {
-                        window.location.reload();
-                    }
-                }, 1000);
+            case "DEV_SERVER_READY": {
+                const targetUrl = agentMsg.payload?.url;
+                if (!targetUrl) return;
+
+                console.log(`[ChatInterface] DEV_SERVER_READY Target: ${targetUrl}`);
+                const currentUrl = window.location.href;
+                console.log(`[ChatInterface] Current URL: ${currentUrl}`);
+
+                if (targetUrl === "http://localhost:3020" && currentUrl.includes("#file=")) {
+                    console.log("[ChatInterface] Preserving targeted view, ignoring generic message.");
+                    break;
+                }
+
+                if (currentUrl !== targetUrl) {
+                    console.log(`[ChatInterface] Navigating to ${targetUrl}`);
+                    window.location.href = targetUrl;
+                }
+
+                console.log("[ChatInterface] Reloading...");
+                window.location.reload();
                 break;
+            }
 
             case "VHL_WORKSPACE_READY":
                 setProjectState("PROJECT_INITIALIZED")
@@ -202,9 +211,9 @@ export const ChatInterface = ({
     //     }
     // }, [isAgentConnected, wsStatus, send])
     useEffect(() => {
-        const canFetchProjects = 
-            isAgentConnected && 
-            wsStatus === "open" && 
+        const canFetchProjects =
+            isAgentConnected &&
+            wsStatus === "open" &&
             projectState === "NO_PROJECT"; // This is now a safe gate
 
         if (canFetchProjects) {
