@@ -10,6 +10,7 @@ import type { ProjectUIState } from "./types"
 import { ChatWindow } from "./components/ChatWindow"
 import { ChatInputBar } from "./components/ChatInputBar"
 import { ChatToggleBubble } from "./components/ChatToggleBubble"
+import { SystemStatusDashboard } from "./components/SystemStatusDashboard"
 
 // Helper
 const createEvent = (type: any, payload: any, artifactId: string | null = null): AgentMessage => ({
@@ -40,6 +41,19 @@ export const ChatInterface = ({
     const [projectName, setProjectName] = useState<string | null>(null)
     const [availableProjects, setAvailableProjects] = useState<string[]>([])
     const [isSynthesizable, setIsSynthesizable] = useState(false)
+
+    // Robust State Tracking
+    const [projectInternalState, setProjectInternalState] = useState({
+        backend_status: "uninitialized",
+        runtime_status: "uninitialized"
+    })
+
+    const [agentInternalState, setAgentInternalState] = useState({
+        archy: "Idle",
+        librarian: "Idle",
+        ana: "Idle",
+        aosm: "Idle"
+    })
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null)
@@ -191,6 +205,14 @@ export const ChatInterface = ({
                     setIsSynthesizable(false)
                 }
                 break
+
+            case "PROJECT_STATE":
+                setProjectInternalState(agentMsg.payload)
+                break
+
+            case "AGENT_STATE":
+                setAgentInternalState(agentMsg.payload)
+                break
         }
     }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage])
 
@@ -328,7 +350,12 @@ export const ChatInterface = ({
                     projectName={projectName}
                     availableProjects={availableProjects}
                     isSynthesizable={isSynthesizable}
-                />
+                >
+                    <SystemStatusDashboard
+                        projectStatus={projectInternalState}
+                        agentStatus={agentInternalState}
+                    />
+                </ChatWindow>
             )}
 
             {/* Bubble / Input Bar */}

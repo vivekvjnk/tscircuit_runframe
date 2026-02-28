@@ -22,6 +22,7 @@ interface ChatWindowProps {
     projectName: string | null
     availableProjects: string[]
     isSynthesizable: boolean
+    children?: React.ReactNode
 }
 
 export const ChatWindow = ({
@@ -40,7 +41,8 @@ export const ChatWindow = ({
     projectId,
     projectName,
     availableProjects,
-    isSynthesizable
+    isSynthesizable,
+    children
 }: ChatWindowProps) => {
     /* 
        If we are not initialized, or if we are initialized but still showing the menu (because no chat yet?), 
@@ -105,6 +107,8 @@ export const ChatWindow = ({
             ) : (
                 <MessageList messages={messages} />
             )}
+
+            {children}
 
             <AgentStatusBar agentStatus={agentStatus} onInterrupt={onInterrupt} />
         </div>
