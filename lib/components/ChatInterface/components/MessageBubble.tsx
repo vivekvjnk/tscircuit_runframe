@@ -3,6 +3,8 @@ import { Loader2, Terminal } from "lucide-react"
 import { cn } from "lib/utils"
 import type { Message } from "../types"
 
+import { LibrarianHIL } from "./LibrarianHIL"
+
 interface MessageBubbleProps {
     message: Message
 }
@@ -34,6 +36,13 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                         {message.status === "evaluating" && <Terminal className="rf-w-3 rf-h-3" />}
                         <span className="rf-capitalize">{message.status}...</span>
                     </div>
+                )}
+
+                {message.payload?.reason === "LIBRARIAN_REVIEW" && message.onAction && (
+                    <LibrarianHIL
+                        scudContent={message.payload.scud_content}
+                        onAction={message.onAction}
+                    />
                 )}
             </div>
         </div>

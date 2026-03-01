@@ -165,7 +165,18 @@ export const ChatInterface = ({
                 break
 
             case "HIL_REQUEST":
-                addAssistantMessage(agentMsg.payload?.message || "Action required.", "thinking")
+                const hilPayload = agentMsg.payload
+                addAssistantMessage(
+                    hilPayload?.message || "Action required.",
+                    "thinking",
+                    hilPayload,
+                    (action, data) => {
+                        send(createEvent("HUMAN_INPUT", {
+                            ...data,
+                            action: action
+                        }, currentArtifactId))
+                    }
+                )
                 break
 
             case "ERROR":

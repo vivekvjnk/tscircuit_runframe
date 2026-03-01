@@ -13,4 +13,6 @@ export interface Message {
     content: string
     status?: AgentStatus
     image?: string
+    payload?: any
+    onAction?: (action: string, data?: any) => void
 }

@@ -10,8 +10,8 @@ export const useChatSession = () => {
         setMessages(prev => [...prev, { role: "user", content, image }])
     }, [])
 
-    const addAssistantMessage = useCallback((content: string, status?: AgentStatus) => {
-        setMessages(prev => [...prev, { role: "assistant", content, status }])
+    const addAssistantMessage = useCallback((content: string, status?: AgentStatus, payload?: any, onAction?: (action: string, data?: any) => void) => {
+        setMessages(prev => [...prev, { role: "assistant", content, status, payload, onAction }])
     }, [])
 
     const updateLastAssistantMessage = useCallback((content: string, status?: AgentStatus) => {
