@@ -25,6 +25,7 @@ interface ChatWindowProps {
     synthesisCompleted: boolean
     projectInternalState: { backend_status: string; runtime_status: string }
     agentInternalState: { archy: string; librarian: string; ana: string; aosm: string }
+    onCloseProject: () => void
 }
 
 export const ChatWindow = ({
@@ -46,7 +47,8 @@ export const ChatWindow = ({
     isSynthesizable,
     synthesisCompleted,
     projectInternalState,
-    agentInternalState
+    agentInternalState,
+    onCloseProject
 }: ChatWindowProps) => {
     /* 
        If we are not initialized, or if we are initialized but still showing the menu (because no chat yet?), 
@@ -97,6 +99,7 @@ export const ChatWindow = ({
                 isSynthesizable={isSynthesizable}
                 onSynthesize={onSynthesize}
                 synthesisCompleted={synthesisCompleted}
+                onCloseProject={onCloseProject}
             />
 
             {(projectState === "NO_PROJECT" ||

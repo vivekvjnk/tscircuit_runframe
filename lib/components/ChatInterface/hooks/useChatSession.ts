@@ -31,11 +31,18 @@ export const useChatSession = () => {
         setMessages(prev => [...prev, { role: "assistant", content, status: "failed" }])
     }, [])
 
+    const resetMessages = useCallback(() => {
+        setMessages([
+            { role: "assistant", content: "Hello! How can I help you with your circuit design today?" }
+        ])
+    }, [])
+
     return {
         messages,
         addUserMessage,
         addAssistantMessage,
         updateLastAssistantMessage,
-        setError
+        setError,
+        resetMessages
     }
 }

@@ -65,7 +65,8 @@ export const ChatInterface = ({
         addUserMessage,
         addAssistantMessage,
         updateLastAssistantMessage,
-        setError
+        setError,
+        resetMessages
     } = useChatSession()
 
     const { isAgentConnected, setConnected } = useAgentPresence()
@@ -210,6 +211,16 @@ export const ChatInterface = ({
                 }
                 break
 
+            case "PROJECT_CLOSED":
+                console.log("[ChatInterface] Project closed. Resetting local state.")
+                setProjectState("NO_PROJECT")
+                setProjectId(null)
+                setProjectName(null)
+                setIsSynthesizable(false)
+                setSynthesisCompleted(false)
+                resetMessages()
+                break
+
             case "PROJECT_STATE":
                 setProjectInternalState(agentMsg.payload)
                 break
@@ -218,7 +229,7 @@ export const ChatInterface = ({
                 setAgentInternalState(agentMsg.payload)
                 break
         }
-    }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage])
+    }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage, resetMessages])
 
     const onOpen = useCallback((send: (msg: WebSocketMessage) => void) => {
         send({ type: "IDENTIFY", payload: { role: "ui" } })
@@ -230,12 +241,6 @@ export const ChatInterface = ({
     const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
 
     // Request projects when agent connects if not already done
-    // useEffect(() => {
-    //     if (isAgentConnected && wsStatus === "open" && projectState == "NO_PROJECT" && !projectId) {
-    //         console.log("Sending list_projects: ",projectState, wsStatus, isAgentConnected)
-    //         send(createEvent("LIST_PROJECTS", {}, null))
-    //     }
-    // }, [isAgentConnected, wsStatus, send])
     useEffect(() => {
         const canFetchProjects =
             isAgentConnected &&
@@ -269,7 +274,15 @@ export const ChatInterface = ({
     const handleSynthesize = () => {
         send(createEvent("SYNTHESIZE_CIRCUIT", {}, null))
         addAssistantMessage("Starting synthesis from loaded artifacts...", "thinking")
-        // Optionally close history to see the result? Or keep it open.
+    }
+
+    const handleCloseProject = () => {
+        if (!isAgentConnected) {
+            setError("No agent connected to close project.")
+            return
+        }
+        send(createEvent("CLOSE_PROJECT", {}, null))
+        addAssistantMessage("Closing project...", "thinking")
     }
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -357,6 +370,7 @@ export const ChatInterface = ({
                     synthesisCompleted={synthesisCompleted}
                     projectInternalState={projectInternalState}
                     agentInternalState={agentInternalState}
+                    onCloseProject={handleCloseProject}
                 />
             )}
 

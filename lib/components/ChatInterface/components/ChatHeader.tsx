@@ -1,5 +1,5 @@
 import React from "react"
-import { Sparkles, Pin, PinOff, X, Database, Activity, Play, CheckCircle } from "lucide-react"
+import { Sparkles, Pin, PinOff, X, Database, Activity, Play, CheckCircle, FolderX } from "lucide-react"
 import { cn } from "lib/utils"
 
 interface ChatHeaderProps {
@@ -14,11 +14,13 @@ interface ChatHeaderProps {
     isSynthesizable?: boolean
     onSynthesize?: () => void
     synthesisCompleted?: boolean
+    onCloseProject?: () => void
 }
 
 export const ChatHeader = ({
     isPinned, onTogglePin, onClose, isAgentConnected, wsStatus,
-    projectName, projectStatus, agentStatus, isSynthesizable, onSynthesize, synthesisCompleted
+    projectName, projectStatus, agentStatus, isSynthesizable, onSynthesize, synthesisCompleted,
+    onCloseProject
 }: ChatHeaderProps) => {
 
     const getStatusColor = (status: string) => {
@@ -71,6 +73,16 @@ export const ChatHeader = ({
                             <CheckCircle className="rf-w-3 rf-h-3" />
                             Synthesized
                         </div>
+                    )}
+
+                    {projectName && onCloseProject && (
+                        <button
+                            onClick={onCloseProject}
+                            className="rf-p-1 rf-rounded-lg rf-text-gray-400 hover:rf-bg-red-50 hover:rf-text-red-500 rf-transition-colors"
+                            title="Close Project"
+                        >
+                            <FolderX className="rf-w-4 rf-h-4" />
+                        </button>
                     )}
 
                     <div className="rf-w-px rf-h-4 rf-bg-gray-300 rf-mx-1" />
