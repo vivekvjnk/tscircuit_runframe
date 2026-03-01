@@ -44,7 +44,7 @@ export const ProjectInitializationMenu = ({
        - AGENT_READY: Show "Agent workspace ready."
        - VHL_READY / PROJECT_INITIALIZED: Show "VHL workspace ready." + Upload buttons
     */
-    console.log("isSynthesizable: ",isSynthesizable)
+    console.log("isSynthesizable: ", isSynthesizable)
 
     return (
         <div className="rf-flex rf-flex-col rf-items-center rf-justify-center rf-h-full rf-p-6 rf-gap-4 rf-text-gray-600 rf-bg-white rf-overflow-y-auto rf-custom-scrollbar">
@@ -148,44 +148,6 @@ export const ProjectInitializationMenu = ({
                 </div>
             )}
 
-            {(projectState === "VHL_READY" || projectState === "PROJECT_INITIALIZED") && (
-                <div className="rf-flex rf-flex-col rf-items-center rf-gap-4 rf-w-full rf-max-w-[280px]">
-                    <div className="rf-text-center">
-                        <div className="rf-text-green-600 rf-font-medium rf-mb-1">VHL workspace ready.</div>
-                        <div className="rf-text-xs rf-text-gray-400">Project: {projectName}</div>
-                    </div>
-
-                    <div className="rf-w-full rf-h-px rf-bg-gray-200" />
-
-                    {isSynthesizable && (
-                        <button
-                            type="button"
-                            onClick={onSynthesize}
-                            className="w-full px-4 py-3 bg-blue-700 text-white rounded-lg border border-blue-800 hover:bg-blue-800 transition-colors flex items-center justify-center gap-3 cursor-pointer shadow-sm"
-                        >
-                            {/* Simple Icon */}
-                            <span className="text-xl" aria-hidden="true">🧠</span>
-                            
-                            {/* Labeling */}
-                            <div className="flex flex-col items-start leading-tight">
-                                <span className="font-semibold text-sm">Synthesize Circuit</span>
-                                <span className="text-[11px] text-blue-100">Start ANA Pipeline</span>
-                            </div>
-                        </button>
-                    )}
-
-                    <div className="rf-flex rf-flex-col rf-gap-2 rf-w-full">
-                        <button className="rf-w-full rf-px-4 rf-py-2.5 rf-bg-white rf-border rf-border-gray-200 rf-text-gray-700 rf-rounded-xl hover:rf-bg-gray-50 hover:rf-border-gray-300 rf-transition-colors rf-flex rf-items-center rf-justify-center rf-gap-2 rf-text-xs">
-                            <span>📄</span>
-                            Upload Schematic
-                        </button>
-                        <button className="rf-w-full rf-px-4 rf-py-2.5 rf-bg-white rf-border rf-border-gray-200 rf-text-gray-700 rf-rounded-xl hover:rf-bg-gray-50 hover:rf-border-gray-300 rf-transition-colors rf-flex rf-items-center rf-justify-center rf-gap-2 rf-text-xs">
-                            <span>📚</span>
-                            Upload Datasheets
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     )
 }

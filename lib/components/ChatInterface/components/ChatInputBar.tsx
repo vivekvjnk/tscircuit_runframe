@@ -10,7 +10,7 @@ interface ChatInputBarProps {
     onMinimize: () => void
     onToggleHistory: () => void
     isHistoryOpen: boolean
-    inputRef?: React.RefObject<HTMLInputElement>
+    inputRef?: React.RefObject<HTMLInputElement | null> | any
     disabled?: boolean
 }
 

@@ -10,7 +10,6 @@ import type { ProjectUIState } from "./types"
 import { ChatWindow } from "./components/ChatWindow"
 import { ChatInputBar } from "./components/ChatInputBar"
 import { ChatToggleBubble } from "./components/ChatToggleBubble"
-import { SystemStatusDashboard } from "./components/SystemStatusDashboard"
 
 // Helper
 const createEvent = (type: any, payload: any, artifactId: string | null = null): AgentMessage => ({
@@ -41,6 +40,7 @@ export const ChatInterface = ({
     const [projectName, setProjectName] = useState<string | null>(null)
     const [availableProjects, setAvailableProjects] = useState<string[]>([])
     const [isSynthesizable, setIsSynthesizable] = useState(false)
+    const [synthesisCompleted, setSynthesisCompleted] = useState(false)
 
     // Robust State Tracking
     const [projectInternalState, setProjectInternalState] = useState({
@@ -141,8 +141,9 @@ export const ChatInterface = ({
 
             case "PROJECT_CREATED":
                 setProjectId(agentMsg.payload?.project_id)
-                setProjectName(agentMsg.payload?.project_name)
+                setProjectName(agentMsg.payload?.project_name || agentMsg.payload?.project_id)
                 setIsSynthesizable(agentMsg.payload?.workspace_info?.is_synthesizable || false)
+                setSynthesisCompleted(agentMsg.payload?.workspace_info?.is_synthesis_completed || false)
                 setProjectState("AGENT_READY")
                 addAssistantMessage("Agent workspace ready.", "completed")
                 break
@@ -151,6 +152,7 @@ export const ChatInterface = ({
                 setProjectId(agentMsg.payload?.project_id)
                 setProjectName(agentMsg.payload?.project_id)
                 setIsSynthesizable(agentMsg.payload?.workspace_info?.is_synthesizable || false)
+                setSynthesisCompleted(agentMsg.payload?.workspace_info?.is_synthesis_completed || false)
                 setProjectState("AGENT_READY")
                 addAssistantMessage("Project loaded successfully.", "completed")
                 break
@@ -196,6 +198,7 @@ export const ChatInterface = ({
                     setProjectName(project_id)
                     if (workspace_info) {
                         setIsSynthesizable(workspace_info.is_synthesizable || false)
+                        setSynthesisCompleted(workspace_info.is_synthesis_completed || false)
                     }
                     setProjectState("PROJECT_INITIALIZED")
                 } else {
@@ -203,6 +206,7 @@ export const ChatInterface = ({
                     setProjectId(null)
                     setProjectName(null)
                     setIsSynthesizable(false)
+                    setSynthesisCompleted(false)
                 }
                 break
 
@@ -350,12 +354,10 @@ export const ChatInterface = ({
                     projectName={projectName}
                     availableProjects={availableProjects}
                     isSynthesizable={isSynthesizable}
-                >
-                    <SystemStatusDashboard
-                        projectStatus={projectInternalState}
-                        agentStatus={agentInternalState}
-                    />
-                </ChatWindow>
+                    synthesisCompleted={synthesisCompleted}
+                    projectInternalState={projectInternalState}
+                    agentInternalState={agentInternalState}
+                />
             )}
 
             {/* Bubble / Input Bar */}

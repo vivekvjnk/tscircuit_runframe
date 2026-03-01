@@ -22,7 +22,9 @@ interface ChatWindowProps {
     projectName: string | null
     availableProjects: string[]
     isSynthesizable: boolean
-    children?: React.ReactNode
+    synthesisCompleted: boolean
+    projectInternalState: { backend_status: string; runtime_status: string }
+    agentInternalState: { archy: string; librarian: string; ana: string; aosm: string }
 }
 
 export const ChatWindow = ({
@@ -42,7 +44,9 @@ export const ChatWindow = ({
     projectName,
     availableProjects,
     isSynthesizable,
-    children
+    synthesisCompleted,
+    projectInternalState,
+    agentInternalState
 }: ChatWindowProps) => {
     /* 
        If we are not initialized, or if we are initialized but still showing the menu (because no chat yet?), 
@@ -80,20 +84,25 @@ export const ChatWindow = ({
     // It says "Reveal new buttons".
 
     return (
-        <div className="rf-w-[400px] rf-h-[500px] rf-bg-white rf-rounded-2xl rf-shadow-2xl rf-border rf-border-gray-100 rf-flex rf-flex-col rf-overflow-hidden rf-animate-in rf-fade-in rf-slide-in-from-bottom-4">
+        <div className="rf-w-[480px] rf-h-[640px] rf-bg-white rf-rounded-2xl rf-shadow-2xl rf-border rf-border-gray-100 rf-flex rf-flex-col rf-overflow-hidden rf-animate-in rf-fade-in rf-slide-in-from-bottom-4">
             <ChatHeader
                 isPinned={isPinned}
                 onTogglePin={onTogglePin}
                 onClose={onClose}
                 isAgentConnected={isAgentConnected}
                 wsStatus={wsStatus}
+                projectName={projectName}
+                projectStatus={projectInternalState}
+                agentStatus={agentInternalState}
+                isSynthesizable={isSynthesizable}
+                onSynthesize={onSynthesize}
+                synthesisCompleted={synthesisCompleted}
             />
 
             {(projectState === "NO_PROJECT" ||
                 projectState === "CREATING_PROJECT" ||
                 projectState === "AGENT_READY" ||
-                projectState === "VHL_READY" ||
-                projectState === "PROJECT_INITIALIZED") ? (
+                projectState === "VHL_READY") ? (
                 <ProjectInitializationMenu
                     projectState={projectState}
                     onCreateProject={onCreateProject}
@@ -107,8 +116,6 @@ export const ChatWindow = ({
             ) : (
                 <MessageList messages={messages} />
             )}
-
-            {children}
 
             <AgentStatusBar agentStatus={agentStatus} onInterrupt={onInterrupt} />
         </div>
