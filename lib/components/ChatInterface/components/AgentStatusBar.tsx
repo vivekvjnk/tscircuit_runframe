@@ -1,6 +1,6 @@
 import React from "react"
 import { Loader2 } from "lucide-react"
-import { AgentStatus } from "../types"
+import type { AgentStatus } from "../types"
 
 interface AgentStatusBarProps {
     agentStatus: AgentStatus

@@ -1,7 +1,7 @@
 import React from "react"
 import { Loader2, Terminal } from "lucide-react"
 import { cn } from "lib/utils"
-import { Message } from "../types"
+import type { Message } from "../types"
 
 interface MessageBubbleProps {
     message: Message

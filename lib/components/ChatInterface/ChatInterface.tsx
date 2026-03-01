@@ -57,7 +57,7 @@ export const ChatInterface = ({
 
     // Refs
     const containerRef = useRef<HTMLDivElement>(null)
-    const inputRef = useRef<HTMLInputElement>(null)
+    const inputRef = useRef<HTMLTextAreaElement>(null)
 
     // Domain Hooks
     const {
@@ -76,6 +76,38 @@ export const ChatInterface = ({
         setAgentStatus,
         handleStatusMessage
     } = useAgentStatus()
+
+    // Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl + M: Toggle Expand/Collapse
+            if (e.ctrlKey && e.key.toLowerCase() === 'm') {
+                e.preventDefault()
+                setIsMinimized(prev => {
+                    const nextMinimized = !prev
+                    if (!nextMinimized) {
+                        setIsHistoryOpen(true)
+                    } else {
+                        setIsHistoryOpen(false)
+                    }
+                    return nextMinimized
+                })
+            }
+
+            // Ctrl + ,: Focus input
+            if (e.ctrlKey && e.key === ',') {
+                e.preventDefault()
+                setIsMinimized(false)
+                setIsHistoryOpen(true)
+                setTimeout(() => {
+                    inputRef.current?.focus()
+                }, 150)
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [])
 
     // Click outside
     useEffect(() => {
@@ -377,21 +409,24 @@ export const ChatInterface = ({
             {/* Bubble / Input Bar */}
             <div
                 className={cn(
-                    "rf-relative rf-flex rf-items-center rf-transition-all rf-duration-500 rf-ease-in-out rf-shadow-2xl rf-border",
+                    "rf-relative rf-flex rf-transition-all rf-duration-500 rf-ease-in-out rf-shadow-2xl rf-border",
                     isMinimized
-                        ? "rf-w-14 rf-h-14 rf-bg-blue-600 rf-rounded-full rf-border-blue-700 hover:rf-scale-110 hover:rf-bg-blue-700"
-                        : "rf-w-[480px] rf-h-14 rf-bg-white rf-rounded-full rf-border-gray-100 rf-px-2"
+                        ? "rf-w-14 rf-h-14 rf-bg-blue-600 rf-rounded-full rf-border-blue-700 hover:rf-scale-110 hover:rf-bg-blue-700 rf-items-center rf-justify-center"
+                        : "rf-w-[480px] rf-min-h-14 rf-bg-white rf-rounded-[32px] rf-border-gray-100 rf-px-4 rf-items-end"
                 )}
+                style={!isMinimized ? { borderRadius: '32px' } : undefined}
             >
-                <ChatToggleBubble
-                    isMinimized={isMinimized}
-                    onClick={() => {
-                        if (isMinimized) {
-                            setIsMinimized(false)
-                            setTimeout(() => inputRef.current?.focus(), 100)
-                        }
-                    }}
-                />
+                {isMinimized && (
+                    <ChatToggleBubble
+                        isMinimized={isMinimized}
+                        onClick={() => {
+                            if (isMinimized) {
+                                setIsMinimized(false)
+                                setTimeout(() => inputRef.current?.focus(), 100)
+                            }
+                        }}
+                    />
+                )}
 
                 {!isMinimized && (
                     <ChatInputBar
@@ -407,10 +442,9 @@ export const ChatInterface = ({
                         onToggleHistory={() => setIsHistoryOpen(!isHistoryOpen)}
                         isHistoryOpen={isHistoryOpen || isFocused || isPinned}
                         inputRef={inputRef}
-                        disabled={projectState !== "PROJECT_INITIALIZED"}
                     />
                 )}
             </div>
-        </div>
+        </div >
     )
 }

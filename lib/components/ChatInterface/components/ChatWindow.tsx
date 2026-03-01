@@ -86,7 +86,7 @@ export const ChatWindow = ({
     // It says "Reveal new buttons".
 
     return (
-        <div className="rf-w-[480px] rf-h-[640px] rf-bg-white rf-rounded-2xl rf-shadow-2xl rf-border rf-border-gray-100 rf-flex rf-flex-col rf-overflow-hidden rf-animate-in rf-fade-in rf-slide-in-from-bottom-4">
+        <div className="rf-w-[480px] rf-h-[600px] rf-max-h-[75vh] rf-bg-white rf-rounded-2xl rf-shadow-2xl rf-border rf-border-gray-100 rf-flex rf-flex-col rf-overflow-hidden rf-animate-in rf-fade-in rf-slide-in-from-bottom-4">
             <ChatHeader
                 isPinned={isPinned}
                 onTogglePin={onTogglePin}
