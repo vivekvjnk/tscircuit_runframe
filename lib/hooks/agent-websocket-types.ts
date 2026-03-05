@@ -29,7 +29,6 @@ export type EventType =
     | "PROJECT_CLOSED"
     | "VHL_WORKSPACE_READY"
     // Sync
-    | "SYNC_TRIGGER"
     | "SYNC_COMPLETE"
     // Dev Server
     | "START_DEV_SERVER"
