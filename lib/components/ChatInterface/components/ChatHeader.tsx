@@ -1,5 +1,5 @@
 import React from "react"
-import { Sparkles, Pin, PinOff, X, Database, Activity, Play, CheckCircle, FolderX } from "lucide-react"
+import { Sparkles, Pin, PinOff, X, Database, Activity, Play, CheckCircle, FolderX, LayoutDashboard } from "lucide-react"
 import { cn } from "lib/utils"
 
 interface ChatHeaderProps {
@@ -13,13 +13,14 @@ interface ChatHeaderProps {
     agentStatus?: { archy: string; librarian: string; ana: string; aosm: string }
     isSynthesizable?: boolean
     onSynthesize?: () => void
+    onTriggerCPA?: () => void
     synthesisCompleted?: boolean
     onCloseProject?: () => void
 }
 
 export const ChatHeader = ({
     isPinned, onTogglePin, onClose, isAgentConnected, wsStatus,
-    projectName, projectStatus, agentStatus, isSynthesizable, onSynthesize, synthesisCompleted,
+    projectName, projectStatus, agentStatus, isSynthesizable, onSynthesize, onTriggerCPA, synthesisCompleted,
     onCloseProject
 }: ChatHeaderProps) => {
 
@@ -69,9 +70,21 @@ export const ChatHeader = ({
                         </button>
                     )}
                     {projectName && synthesisCompleted && (
-                        <div className="rf-flex rf-items-center rf-gap-1 rf-px-2 rf-py-1 rf-bg-emerald-50 rf-border rf-border-emerald-200 rf-text-emerald-700 rf-text-xs rf-rounded-md">
-                            <CheckCircle className="rf-w-3 rf-h-3" />
-                            Synthesized
+                        <div className="rf-flex rf-items-center rf-gap-2">
+                            <div className="rf-flex rf-items-center rf-gap-1 rf-px-2 rf-py-1 rf-bg-emerald-50 rf-border rf-border-emerald-200 rf-text-emerald-700 rf-text-xs rf-rounded-md">
+                                <CheckCircle className="rf-w-3 rf-h-3" />
+                                Synthesized
+                            </div>
+                            {onTriggerCPA && (
+                                <div
+                                    onClick={onTriggerCPA}
+                                    className="rf-cursor-pointer rf-flex rf-items-center rf-px-2 rf-py-1 rf-bg-blue-600 rf-text-white rf-text-[10px] rf-font-bold rf-rounded-md rf-shadow-sm hover:rf-bg-blue-700 rf-transition-all"
+                                    title="Trigger Component Placement Agent (CPA) in AOSM"
+                                    id="cpa-trigger-button"
+                                >
+                                    TRIGGER CPA
+                                </div>
+                            )}
                         </div>
                     )}
 

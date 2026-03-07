@@ -328,6 +328,11 @@ export const ChatInterface = ({
         addAssistantMessage("Closing project...", "thinking")
     }
 
+    const handleCPATrigger = () => {
+        send(createEvent("TRIGGER_CPA_AGENT", {}, currentArtifactId))
+        addAssistantMessage("Triggering Component Placement Agent (CPA)...", "thinking")
+    }
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (!query.trim()) return
@@ -406,6 +411,7 @@ export const ChatInterface = ({
                     onCreateProject={handleCreateProject}
                     onLoadProject={handleLoadProject}
                     onSynthesize={handleSynthesize}
+                    onTriggerCPA={handleCPATrigger}
                     projectId={projectId}
                     projectName={projectName}
                     availableProjects={availableProjects}

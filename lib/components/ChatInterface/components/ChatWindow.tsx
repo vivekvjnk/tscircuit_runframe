@@ -18,6 +18,7 @@ interface ChatWindowProps {
     onCreateProject: (name: string) => void
     onLoadProject: (id: string) => void
     onSynthesize: () => void
+    onTriggerCPA: () => void
     projectId: string | null
     projectName: string | null
     availableProjects: string[]
@@ -41,6 +42,7 @@ export const ChatWindow = ({
     onCreateProject,
     onLoadProject,
     onSynthesize,
+    onTriggerCPA,
     projectId,
     projectName,
     availableProjects,
@@ -98,6 +100,7 @@ export const ChatWindow = ({
                 agentStatus={agentInternalState}
                 isSynthesizable={isSynthesizable}
                 onSynthesize={onSynthesize}
+                onTriggerCPA={onTriggerCPA}
                 synthesisCompleted={synthesisCompleted}
                 onCloseProject={onCloseProject}
             />
