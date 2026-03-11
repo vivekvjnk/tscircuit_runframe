@@ -114,7 +114,7 @@
     "@types/ws": "^8.18.1"
   },
   "dependencies": {
-    "@tscircuit/eval": "^0.0.702",
+    "@tscircuit/eval": "^0.0.703",
     "@tscircuit/solver-utils": "^0.0.7"
   }
 }
