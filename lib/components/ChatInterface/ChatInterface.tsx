@@ -22,10 +22,20 @@ const createEvent = (type: any, payload: any, artifactId: string | null = null):
 })
 
 export const ChatInterface = ({
-    agentUrl = "ws://localhost:1080"
+    agentUrl
 }: {
     agentUrl?: string
 }) => {
+    // Determine default agent URL based on current origin
+    const defaultAgentUrl = typeof window !== "undefined" 
+        ? ((window as any).VHL_AGENT_WS_URL 
+            ? ((window as any).VHL_AGENT_WS_URL.startsWith("/") 
+                ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}${(window as any).VHL_AGENT_WS_URL}` 
+                : (window as any).VHL_AGENT_WS_URL)
+            : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws-agent`)
+        : "ws://localhost:1080"
+
+    const effectiveAgentUrl = agentUrl || defaultAgentUrl
     // UI State
     const [query, setQuery] = useState("")
     const [isMinimized, setIsMinimized] = useState(true)
@@ -281,7 +291,7 @@ export const ChatInterface = ({
         send(createEvent("GET_SYSTEM_STATE", {}, null))
     }, [])
 
-    const { send, status: wsStatus } = useAgentSocket(agentUrl, handleAgentMessage, onOpen)
+    const { send, status: wsStatus } = useAgentSocket(effectiveAgentUrl, handleAgentMessage, onOpen)
 
     // Request projects when agent connects if not already done
     useEffect(() => {

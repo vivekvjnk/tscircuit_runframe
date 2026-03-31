@@ -1,6 +1,7 @@
 export * from "./server/agent-websocket-server"
 export * from "./server/mock-agent-handler"
 export * from "./server/relay-agent-handler"
+export * from "./server/health"
 export * from "./hooks/agent-websocket-types"
 
 import { ensureAgentWebSocketServer } from "./server/agent-websocket-server"
