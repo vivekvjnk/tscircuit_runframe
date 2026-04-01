@@ -28,11 +28,24 @@ export const ChatInterface = ({
 }) => {
     // Determine default agent URL based on current origin
     const defaultAgentUrl = typeof window !== "undefined" 
-        ? ((window as any).VHL_AGENT_WS_URL 
-            ? ((window as any).VHL_AGENT_WS_URL.startsWith("/") 
-                ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}${(window as any).VHL_AGENT_WS_URL}` 
-                : (window as any).VHL_AGENT_WS_URL)
-            : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/ws-agent`)
+        ? (() => {
+            const injectedUrl = (window as any).VHL_AGENT_WS_URL;
+            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+            const host = window.location.host;
+            
+            if (injectedUrl) {
+                if (injectedUrl.startsWith("/")) {
+                    return `${protocol}//${host}${injectedUrl}`;
+                }
+                // If it's already an absolute URL, check if it's secure
+                if (window.location.protocol === "https:" && injectedUrl.startsWith("ws://") && !injectedUrl.includes("localhost")) {
+                    console.warn("[ChatInterface] Insecure WebSocket URL detected on HTTPS page, attempting to upgrade to wss:");
+                    return injectedUrl.replace("ws://", "wss://");
+                }
+                return injectedUrl;
+            }
+            return `${protocol}//${host}/ws-agent`;
+        })()
         : "ws://localhost:1080"
 
     const effectiveAgentUrl = agentUrl || defaultAgentUrl
@@ -222,20 +235,31 @@ export const ChatInterface = ({
 
                 console.log(`[ChatInterface] DEV_SERVER_READY Target: ${targetUrl}`);
                 const currentUrl = window.location.href;
-                console.log(`[ChatInterface] Current URL: ${currentUrl}`);
+                const currentPath = window.location.pathname + window.location.hash;
+                console.log(`[ChatInterface] Current URL: ${currentUrl}, Path: ${currentPath}`);
+
+                // If targetUrl is relative (e.g. /#file=index.tsx) or (/) we compare correctly
+                if (targetUrl.startsWith("/") || targetUrl === "/") {
+                    if (currentPath === targetUrl || (targetUrl === "/" && currentPath === "")) {
+                        console.log("[ChatInterface] Already at target path, ignoring.");
+                        break;
+                    }
+                }
 
                 if (targetUrl === "http://localhost:3020" && currentUrl.includes("#file=")) {
                     console.log("[ChatInterface] Preserving targeted view, ignoring generic message.");
                     break;
                 }
 
-                if (currentUrl !== targetUrl) {
+                if (currentUrl !== targetUrl && currentPath !== targetUrl) {
                     console.log(`[ChatInterface] Navigating to ${targetUrl}`);
                     window.location.href = targetUrl;
+                    // On some browsers, setting location.href doesn't trigger immediate navigation 
+                    // if it's just a hash change, so we might need a reload if it's NOT a hash change.
+                    if (!targetUrl.includes("#")) {
+                         window.location.reload();
+                    }
                 }
-
-                console.log("[ChatInterface] Reloading...");
-                window.location.reload();
                 break;
             }
 
