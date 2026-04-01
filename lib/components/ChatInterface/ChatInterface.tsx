@@ -30,23 +30,13 @@ export const ChatInterface = ({
     const defaultAgentUrl = typeof window !== "undefined" 
         ? (() => {
             const injectedUrl = (window as any).VHL_AGENT_WS_URL;
-            const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-            const host = window.location.host;
+            if (injectedUrl) return injectedUrl;
             
-            if (injectedUrl) {
-                if (injectedUrl.startsWith("/")) {
-                    return `${protocol}//${host}${injectedUrl}`;
-                }
-                // If it's already an absolute URL, check if it's secure
-                if (window.location.protocol === "https:" && injectedUrl.startsWith("ws://") && !injectedUrl.includes("localhost")) {
-                    console.warn("[ChatInterface] Insecure WebSocket URL detected on HTTPS page, attempting to upgrade to wss:");
-                    return injectedUrl.replace("ws://", "wss://");
-                }
-                return injectedUrl;
-            }
+            const protocol = window.location.protocol;
+            const host = window.location.host;
             return `${protocol}//${host}/ws-agent`;
         })()
-        : "ws://localhost:1080"
+        : "http://localhost:1080/ws-agent"
 
     const effectiveAgentUrl = agentUrl || defaultAgentUrl
     // UI State
