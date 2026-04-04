@@ -27,11 +27,11 @@ export const ChatInterface = ({
     agentUrl?: string
 }) => {
     // Determine default agent URL based on current origin
-    const defaultAgentUrl = typeof window !== "undefined" 
+    const defaultAgentUrl = typeof window !== "undefined"
         ? (() => {
             const injectedUrl = (window as any).VHL_AGENT_WS_URL;
             if (injectedUrl) return injectedUrl;
-            
+
             const protocol = window.location.protocol;
             const host = window.location.host;
             return `${protocol}//${host}/ws-agent`;
@@ -448,8 +448,8 @@ export const ChatInterface = ({
                 className={cn(
                     "rf-relative rf-flex rf-transition-all rf-duration-500 rf-ease-in-out rf-shadow-2xl rf-border",
                     isMinimized
-                        ? "rf-w-14 rf-h-14 rf-bg-blue-600 rf-rounded-full rf-border-blue-700 hover:rf-scale-110 hover:rf-bg-blue-700 rf-items-center rf-justify-center"
-                        : "rf-w-[480px] rf-min-h-14 rf-bg-white rf-rounded-[32px] rf-border-gray-100 rf-px-4 rf-items-end"
+                        ? "rf-w-14 rf-h-14 rf-bg-gradient-to-br rf-from-blue-600 rf-to-indigo-700 rf-rounded-full rf-border-blue-700/50 hover:rf-scale-110 hover:rf-shadow-blue-500/20 rf-items-center rf-justify-center"
+                        : "rf-w-[480px] rf-min-h-14 rf-bg-white/90 rf-backdrop-blur-md rf-rounded-[32px] rf-border-gray-200 rf-px-4 rf-items-end"
                 )}
                 style={!isMinimized ? { borderRadius: '32px' } : undefined}
             >

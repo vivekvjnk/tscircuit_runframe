@@ -124,7 +124,7 @@ export const ChatInputBar = ({
                     type="submit"
                     className={cn(
                         "rf-p-2 rf-rounded-full rf-transition-all rf-mb-1",
-                        query.trim() && !disabled ? "rf-bg-blue-600 rf-text-white rf-shadow-md" : "rf-bg-gray-50 rf-text-gray-300"
+                        query.trim() && !disabled ? "rf-bg-gradient-to-br rf-from-blue-600 rf-to-indigo-600 rf-text-white rf-shadow-md" : "rf-bg-gray-50 rf-text-gray-300"
                     )}
                     disabled={!query.trim() || disabled}
                 >

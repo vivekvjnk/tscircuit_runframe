@@ -28,30 +28,30 @@ export const ChatHeader = ({
         switch (status?.toLowerCase()) {
             case "initialized":
             case "idle":
-                return "rf-bg-emerald-500 rf-text-white"
+                return "rf-bg-emerald-500/20 rf-text-emerald-300 rf-border rf-border-emerald-500/30"
             case "initializing":
             case "running":
-                return "rf-bg-blue-600 rf-text-white rf-animate-pulse"
+                return "rf-bg-blue-400/20 rf-text-blue-100 rf-animate-pulse rf-border rf-border-blue-400/30"
             default:
-                return "rf-bg-gray-400 rf-text-white"
+                return "rf-bg-white/10 rf-text-white/40"
         }
     }
 
     return (
-        <div className="rf-flex rf-flex-col rf-border-b rf-bg-gray-50/50">
+        <div className="rf-flex rf-flex-col rf-border-b rf-border-blue-700/20 rf-bg-gradient-to-r rf-from-blue-600 rf-to-indigo-700">
             {/* Top Bar */}
             <div className="rf-p-3 rf-flex rf-items-start rf-justify-between rf-gap-3">
                 <div className="rf-flex rf-items-start rf-gap-2 rf-min-w-0 rf-flex-1">
-                    <div className="rf-bg-blue-600 rf-p-1.5 rf-rounded-lg rf-shrink-0">
+                    <div className="rf-bg-white/20 rf-p-1.5 rf-rounded-lg rf-shrink-0 rf-backdrop-blur-sm">
                         <Sparkles className="rf-w-4 rf-h-4 rf-text-white" />
                     </div>
                     <div className="rf-flex rf-flex-col rf-min-w-0">
-                        <h3 className="rf-font-semibold rf-text-sm rf-text-gray-800 rf-leading-tight rf-break-all rf-line-clamp-2">
+                        <h3 className="rf-font-semibold rf-text-sm rf-text-white rf-leading-tight rf-break-all rf-line-clamp-2">
                             {projectName ? `Project: ${projectName}` : "tscircuit AI Assistant"}
                         </h3>
                         <div className="rf-flex rf-items-center rf-gap-1.5 rf-mt-0.5">
-                            <div className={cn("rf-w-1.5 rf-h-1.5 rf-rounded-full", wsStatus === "open" ? (isAgentConnected ? "rf-bg-green-500" : "rf-bg-yellow-500") : "rf-bg-red-500")} />
-                            <span className="rf-text-[9px] rf-text-gray-500 rf-uppercase rf-tracking-wider">
+                            <div className={cn("rf-w-1.5 rf-h-1.5 rf-rounded-full", wsStatus === "open" ? (isAgentConnected ? "rf-bg-green-400" : "rf-bg-yellow-400") : "rf-bg-red-400")} />
+                            <span className="rf-text-[9px] rf-text-white/80 rf-uppercase rf-tracking-wider rf-font-medium">
                                 {wsStatus === "open" ? (isAgentConnected ? "Agent Ready" : "Waiting for Agent") : "Disconnected"}
                             </span>
                         </div>
@@ -104,7 +104,7 @@ export const ChatHeader = ({
                         onClick={onTogglePin}
                         className={cn(
                             "rf-p-1 rf-rounded-lg rf-transition-colors",
-                            isPinned ? "rf-bg-blue-100 rf-text-blue-600" : "rf-text-gray-400 hover:rf-bg-gray-200"
+                            isPinned ? "rf-bg-white/20 rf-text-white" : "rf-text-white/60 hover:rf-bg-white/10 hover:rf-text-white"
                         )}
                         title={isPinned ? "Unpin chat" : "Pin chat"}
                     >
@@ -112,20 +112,20 @@ export const ChatHeader = ({
                     </button>
                     <button
                         onClick={onClose}
-                        className="rf-p-1 rf-rounded-lg hover:rf-bg-gray-200 rf-transition-colors"
+                        className="rf-p-1 rf-rounded-lg hover:rf-bg-white/10 rf-transition-colors group"
                     >
-                        <X className="rf-w-4 rf-h-4 rf-text-gray-500" />
+                        <X className="rf-w-4 rf-h-4 rf-text-white/60 group-hover:rf-text-white" />
                     </button>
                 </div>
             </div>
 
             {/* Status Bar (Condensend System Dashboard) */}
             {projectName && projectStatus && agentStatus && (
-                <div className="rf-px-3 rf-pb-1.5 rf-pt-1 rf-flex rf-items-center rf-gap-4 rf-text-[8px] rf-text-gray-500 rf-bg-white rf-border-t rf-border-gray-100/50">
+                <div className="rf-px-3 rf-pb-1.5 rf-pt-1 rf-flex rf-items-center rf-gap-4 rf-text-[8px] rf-text-white/70 rf-bg-blue-900/40 rf-border-t rf-border-white/10 rf-backdrop-blur-sm">
                     <div className="rf-flex rf-items-center rf-gap-3">
                         <div className="rf-flex rf-items-center rf-gap-1">
-                            <Database className="rf-w-2.5 rf-h-2.5 rf-text-gray-400" />
-                            <span className="rf-font-bold rf-uppercase rf-tracking-tighter rf-text-gray-400 rf-mr-1">Sys:</span>
+                            <Database className="rf-w-2.5 rf-h-2.5 rf-text-white/40" />
+                            <span className="rf-font-bold rf-uppercase rf-tracking-tighter rf-text-white/40 rf-mr-1">Sys:</span>
                         </div>
                         <div className="rf-flex rf-items-center rf-gap-2">
                             <div className={cn("rf-px-1 rf-py-0.5 rf-rounded-sm rf-font-bold rf-uppercase rf-tracking-tighter", getStatusStyles(projectStatus.backend_status))}>
@@ -137,12 +137,12 @@ export const ChatHeader = ({
                         </div>
                     </div>
 
-                    <div className="rf-w-px rf-h-3 rf-bg-gray-200" />
+                    <div className="rf-w-px rf-h-3 rf-bg-white/10" />
 
                     <div className="rf-flex rf-items-center rf-gap-3">
                         <div className="rf-flex rf-items-center rf-gap-1">
-                            <Activity className="rf-w-2.5 rf-h-2.5 rf-text-gray-400" />
-                            <span className="rf-font-bold rf-uppercase rf-tracking-tighter rf-text-gray-400 rf-mr-1">Agents:</span>
+                            <Activity className="rf-w-2.5 rf-h-2.5 rf-text-white/40" />
+                            <span className="rf-font-bold rf-uppercase rf-tracking-tighter rf-text-white/40 rf-mr-1">Agents:</span>
                         </div>
                         <div className="rf-flex rf-items-center rf-gap-2">
                             <div className={cn("rf-px-1 rf-py-0.5 rf-rounded-sm rf-font-bold rf-uppercase rf-tracking-tighter", getStatusStyles(agentStatus.aosm))}>

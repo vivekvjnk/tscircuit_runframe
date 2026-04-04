@@ -3,7 +3,8 @@ import { Loader2, Terminal } from "lucide-react"
 import { cn } from "lib/utils"
 import type { Message } from "../types"
 
-import { LibrarianHIL } from "./LibrarianHIL"
+import { ScudReviewHIL } from "./ScudReviewHIL"
+import { marked } from "marked"
 
 interface MessageBubbleProps {
     message: Message
@@ -20,15 +21,21 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
             <div className={cn(
                 "rf-p-3 rf-rounded-2xl rf-text-sm rf-shadow-sm rf-border",
                 message.role === "user"
-                    ? "rf-bg-blue-600 rf-text-white rf-border-blue-700 rf-rounded-tr-none"
-                    : "rf-bg-white rf-text-gray-700 rf-border-gray-100 rf-rounded-tl-none"
+                    ? "rf-bg-gradient-to-br rf-from-blue-600 rf-to-indigo-600 rf-text-white rf-border-blue-700/50 rf-rounded-tr-none"
+                    : "rf-bg-blue-50/50 rf-text-gray-700 rf-border-blue-100/50 rf-rounded-tl-none rf-backdrop-blur-sm"
             )}>
                 {message.image && (
                     <div className="rf-mb-2 rf-rounded-lg rf-overflow-hidden rf-border rf-border-white/20">
                         <img src={message.image} alt="Uploaded" className="rf-w-full rf-h-auto" />
                     </div>
                 )}
-                {message.content}
+                <div className={cn(message.role !== "user" && "rf-markdown")}>
+                    {message.role === "user" ? (
+                        message.content
+                    ) : (
+                        <div dangerouslySetInnerHTML={{ __html: marked.parse(message.content || "") as string }} />
+                    )}
+                </div>
 
                 {message.status && message.status !== "completed" && (
                     <div className="rf-mt-2 rf-flex rf-items-center rf-gap-2 rf-text-[11px] rf-font-medium rf-opacity-80">
@@ -38,8 +45,9 @@ export const MessageBubble = ({ message }: MessageBubbleProps) => {
                     </div>
                 )}
 
-                {message.payload?.reason === "LIBRARIAN_REVIEW" && message.onAction && (
-                    <LibrarianHIL
+                {(message.payload?.reason === "LIBRARIAN_REVIEW" || message.payload?.reason === "ARCHY_REVIEW") && message.onAction && (
+                    <ScudReviewHIL
+                        reason={message.payload.reason}
                         scudContent={message.payload.scud_content}
                         onAction={message.onAction}
                     />
