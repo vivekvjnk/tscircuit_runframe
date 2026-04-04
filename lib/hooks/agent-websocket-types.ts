@@ -31,7 +31,6 @@ export type EventType =
     // Sync
     | "SYNC_COMPLETE"
     // Dev Server
-    | "START_DEV_SERVER"
     | "DEV_SERVER_READY"
     // System State
     | "GET_SYSTEM_STATE"

@@ -246,17 +246,13 @@ export const ChatInterface = ({
                     window.location.href = targetUrl;
                     // On some browsers, setting location.href doesn't trigger immediate navigation 
                     // if it's just a hash change, so we might need a reload if it's NOT a hash change.
-                    if (!targetUrl.includes("#")) {
-                         window.location.reload();
-                    }
+                    // if (!targetUrl.includes("#")) {
+                    window.location.reload();
+                    // }
                 }
                 break;
             }
 
-            case "VHL_WORKSPACE_READY":
-                setProjectState("PROJECT_INITIALIZED")
-                addAssistantMessage("VHL workspace ready.", "completed")
-                break
 
             case "SYSTEM_STATE":
                 // @ts-ignore
