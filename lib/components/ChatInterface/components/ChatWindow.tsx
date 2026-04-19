@@ -15,7 +15,7 @@ interface ChatWindowProps {
     onClose: () => void
     onInterrupt: () => void
     projectState: ProjectUIState
-    onCreateProject: (name: string) => void
+    onCreateProject: (name: string, zipFile?: File) => void
     onLoadProject: (id: string) => void
     onSynthesize: () => void
     onTriggerCPA: () => void

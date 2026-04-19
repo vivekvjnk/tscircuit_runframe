@@ -317,11 +317,30 @@ export const ChatInterface = ({
     }, [isAgentConnected, wsStatus, projectState, send]);
 
     // Actions
-    const handleCreateProject = (name: string) => {
+    const handleCreateProject = async (name: string, zipFile?: File) => {
         setProjectName(name)
         setProjectState("CREATING_PROJECT")
         setIsHistoryOpen(true) // Ensure we see the menu
-        send(createEvent("CREATE_PROJECT", { project_name: name }, null))
+
+        let zip_blob_id: string | undefined = undefined;
+
+        if (zipFile) {
+            addAssistantMessage("Uploading project ZIP...", "thinking")
+            try {
+                const { getBrowserStorageClient, computeFileHash } = await import("../../utils/objectStorageBrowser")
+                const hash = await computeFileHash(zipFile)
+                zip_blob_id = `${hash}.zip`
+                const client = getBrowserStorageClient()
+                await client.uploadFile(zipFile, `uploads/${zip_blob_id}`)
+            } catch (err: any) {
+                console.error("Failed to upload ZIP:", err)
+                addAssistantMessage(`Failed to upload ZIP: ${err.message}`, "failed")
+                setProjectState("NO_PROJECT")
+                return
+            }
+        }
+
+        send(createEvent("CREATE_PROJECT", { project_name: name, zip_blob_id }, null))
         addAssistantMessage("Creating project...", "thinking")
     }
 

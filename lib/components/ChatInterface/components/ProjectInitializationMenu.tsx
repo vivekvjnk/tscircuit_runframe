@@ -4,7 +4,7 @@ import { cn } from "lib/utils"
 
 interface ProjectInitializationMenuProps {
     projectState: ProjectUIState
-    onCreateProject: (name: string) => void
+    onCreateProject: (name: string, zipFile?: File) => void
     onLoadProject: (id: string) => void
     onSynthesize: () => void
     projectId: string | null
@@ -25,6 +25,7 @@ export const ProjectInitializationMenu = ({
 }: ProjectInitializationMenuProps) => {
     const [isCreating, setIsCreating] = useState(false)
     const [localProjectName, setLocalProjectName] = useState("")
+    const [selectedZipFile, setSelectedZipFile] = useState<File | undefined>()
 
     const handleCreateClick = () => {
         setIsCreating(true)
@@ -33,7 +34,17 @@ export const ProjectInitializationMenu = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         if (localProjectName.trim()) {
-            onCreateProject(localProjectName.trim())
+            onCreateProject(localProjectName.trim(), selectedZipFile)
+        }
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setSelectedZipFile(file)
+            if (!localProjectName) {
+                setLocalProjectName(file.name.replace(/\.[^/.]+$/, ""))
+            }
         }
     }
 
@@ -104,6 +115,23 @@ export const ProjectInitializationMenu = ({
 
             {projectState === "NO_PROJECT" && isCreating && (
                 <form onSubmit={handleSubmit} className="rf-flex rf-flex-col rf-gap-3 rf-w-full rf-max-w-[240px] rf-animate-in rf-fade-in rf-slide-in-from-bottom-2">
+                    
+                    {/* ZIP Upload Section */}
+                    <div className="rf-flex rf-flex-col rf-gap-1">
+                        <label className="rf-text-sm rf-font-medium rf-text-gray-700">Project ZIP (Optional)</label>
+                        <div className="rf-flex rf-items-center rf-gap-2">
+                            <label className="rf-flex-shrink-0 rf-cursor-pointer rf-px-3 rf-py-1.5 rf-bg-blue-50 rf-text-blue-600 rf-text-xs rf-font-semibold rf-rounded-md hover:rf-bg-blue-100 rf-transition-colors">
+                                Upload ZIP
+                                <input type="file" accept=".zip" onChange={handleFileChange} className="rf-hidden" />
+                            </label>
+                            {selectedZipFile && (
+                                <span className="rf-text-xs rf-text-gray-500 rf-truncate" title={selectedZipFile.name}>
+                                    {selectedZipFile.name}
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
                     <label className="rf-text-sm rf-font-medium rf-text-gray-700">
                         Project Name
                     </label>
