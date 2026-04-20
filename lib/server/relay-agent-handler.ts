@@ -1,4 +1,5 @@
 import type { AgentHandler, AgentMessage } from "../hooks/agent-websocket-types"
+import { ROLE_WEBUI, ROLE_AGENT_BACKEND } from "../constants/roles"
 
 /**
  * A handler that relays messages between UI clients and the Agent client.
@@ -9,7 +10,7 @@ export class RelayAgentHandler implements AgentHandler {
     private static agentClient: ((msg: AgentMessage) => void) | null = null
 
     private currentSend: ((msg: AgentMessage) => void) | null = null
-    private role: "ui" | "agent" | null = null
+    private role: string | null = null
 
     onConnect(send: (msg: AgentMessage) => void) {
         this.currentSend = send
@@ -40,17 +41,17 @@ export class RelayAgentHandler implements AgentHandler {
             RelayAgentHandler.uiClients.forEach(uiSend => uiSend(msg))
         } else {
             // Unidentified client trying to send something
-            send({ type: "ERROR", payload: { message: "Please IDENTIFY yourself first (role: 'ui' or 'agent')" } })
+            send({ type: "ERROR", payload: { message: `Please IDENTIFY yourself first (role: '${ROLE_WEBUI}' or '${ROLE_AGENT_BACKEND}')` } })
         }
     }
 
     private handleIdentify(role: string, send: (msg: AgentMessage) => void) {
-        if (role === "ui") {
-            this.role = "ui"
+        if (role === "ui" || role === ROLE_WEBUI) {
+            this.role = ROLE_WEBUI
             RelayAgentHandler.uiClients.add(send)
             console.log("RelayAgentHandler: UI client identified")
-        } else if (role === "agent") {
-            this.role = "agent"
+        } else if (role === "agent" || role === ROLE_AGENT_BACKEND) {
+            this.role = ROLE_AGENT_BACKEND
             RelayAgentHandler.agentClient = send
             console.log("RelayAgentHandler: Agent client identified")
             // Notify all UIs that agent is connected
@@ -59,9 +60,9 @@ export class RelayAgentHandler implements AgentHandler {
     }
 
     onDisconnect() {
-        if (this.role === "ui" && this.currentSend) {
+        if (this.role === ROLE_WEBUI && this.currentSend) {
             RelayAgentHandler.uiClients.delete(this.currentSend)
-        } else if (this.role === "agent") {
+        } else if (this.role === ROLE_AGENT_BACKEND) {
             RelayAgentHandler.agentClient = null
             console.log("RelayAgentHandler: Agent client disconnected")
             // Notify all UIs that agent is gone

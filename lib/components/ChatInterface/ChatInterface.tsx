@@ -10,6 +10,7 @@ import type { ProjectUIState } from "./types"
 import { ChatWindow } from "./components/ChatWindow"
 import { ChatInputBar } from "./components/ChatInputBar"
 import { ChatToggleBubble } from "./components/ChatToggleBubble"
+import { ROLE_WEBUI, ROLE_RUNTIME } from "../../constants/roles"
 
 // Helper
 const createEvent = (type: any, payload: any, artifactId: string | null = null): AgentMessage => ({
@@ -17,7 +18,7 @@ const createEvent = (type: any, payload: any, artifactId: string | null = null):
     type,
     artifact_id: artifactId,
     timestamp: new Date().toISOString(),
-    source: "runtime",
+    source: ROLE_WEBUI,
     payload
 })
 
@@ -295,7 +296,7 @@ export const ChatInterface = ({
     }, [setConnected, handleStatusMessage, updateLastAssistantMessage, addAssistantMessage, resetMessages])
 
     const onOpen = useCallback((send: (msg: WebSocketMessage) => void) => {
-        send({ type: "IDENTIFY", payload: { role: "ui" } })
+        send({ type: "IDENTIFY", payload: { role: ROLE_WEBUI } })
 
         // Request current system state to restore session
         send(createEvent("GET_SYSTEM_STATE", {}, null))
