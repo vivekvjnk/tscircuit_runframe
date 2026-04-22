@@ -318,7 +318,7 @@ export const ChatInterface = ({
     }, [isAgentConnected, wsStatus, projectState, send]);
 
     // Actions
-    const handleCreateProject = async (name: string, zipFile?: File) => {
+    const handleCreateProject = async (name: string, zipFile?: File | string) => {
         setProjectName(name)
         setProjectState("CREATING_PROJECT")
         setIsHistoryOpen(true) // Ensure we see the menu
@@ -326,24 +326,39 @@ export const ChatInterface = ({
         let zip_blob_id: string | undefined = undefined;
 
         if (zipFile) {
-            addAssistantMessage("Uploading project ZIP...", "thinking")
-            try {
-                const { getBrowserStorageClient, computeFileHash } = await import("../../utils/objectStorageBrowser")
-                const hash = await computeFileHash(zipFile)
-                zip_blob_id = `${hash}.zip`
-                const client = getBrowserStorageClient()
-                await client.uploadFile(zipFile, `uploads/${zip_blob_id}`)
-            } catch (err: any) {
-                console.error("Failed to upload ZIP:", err)
-                addAssistantMessage(`Failed to upload ZIP: ${err.message}`, "failed")
-                setProjectState("NO_PROJECT")
-                return
+            if (typeof zipFile === "string") {
+                // If it's a string, we assume it's already a blob_id (for mocking/tests)
+                zip_blob_id = zipFile
+            } else {
+                addAssistantMessage("Uploading project ZIP...", "thinking")
+                try {
+                    const { getBrowserStorageClient, computeFileHash } = await import("../../utils/objectStorageBrowser")
+                    const hash = await computeFileHash(zipFile)
+                    zip_blob_id = `${hash}.zip`
+                    const client = getBrowserStorageClient()
+                    await client.uploadFile(zipFile, `uploads/${zip_blob_id}`)
+                } catch (err: any) {
+                    console.error("Failed to upload ZIP:", err)
+                    addAssistantMessage(`Failed to upload ZIP: ${err.message}`, "failed")
+                    setProjectState("NO_PROJECT")
+                    return
+                }
             }
         }
 
         send(createEvent("CREATE_PROJECT", { project_name: name, zip_blob_id }, null))
         addAssistantMessage("Creating project...", "thinking")
     }
+
+    // Expose for testing
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            (window as any).__VHL_TEST_HOOKS__ = {
+                ...((window as any).__VHL_TEST_HOOKS__ || {}),
+                createProject: handleCreateProject
+            }
+        }
+    }, [handleCreateProject])
 
     const handleLoadProject = (id: string) => {
         setProjectId(id)
