@@ -319,6 +319,13 @@ export const ChatInterface = ({
 
     // Actions
     const handleCreateProject = async (name: string, zipFile?: File | string) => {
+        if (!name) {
+            console.warn("[VHL Test] handleCreateProject called without a name. Ignoring.");
+            console.trace();
+            return;
+        }
+
+        console.log(`[VHL Test] handleCreateProject triggered for: ${name}`);
         setProjectName(name)
         setProjectState("CREATING_PROJECT")
         setIsHistoryOpen(true) // Ensure we see the menu
