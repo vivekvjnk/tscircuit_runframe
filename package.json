@@ -30,7 +30,9 @@
     "format": "biome format --write .",
     "vercel-build": "bun run build:css && cosmos-export",
     "serve:cosmos": "serve cosmos-export",
-    "pkg-pr-new-release": "bunx pkg-pr-new publish --comment=off --peerDeps"
+    "pkg-pr-new-release": "bunx pkg-pr-new publish --comment=off --peerDeps",
+    "test": "vitest",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
     "@babel/standalone": "^7.26.10",
@@ -89,6 +91,7 @@
     "marked": "^15.0.12",
     "minimatch": "^10.0.3",
     "playwright": "^1.49.1",
+    "@playwright/test": "^1.49.1",
     "postcss": "^8.4.49",
     "posthog-js": "^1.253.4",
     "react": "19.1.0",
@@ -111,6 +114,7 @@
     "tscircuit": "^0.0.1438",
     "tsup": "^8.3.5",
     "vite": "^7.1.2",
+    "vitest": "^1.4.0",
     "yargs": "^17.7.2",
     "@types/ws": "^8.18.1"
   },

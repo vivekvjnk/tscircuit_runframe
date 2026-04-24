@@ -9,7 +9,7 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
 
     const send = useCallback((msg: WebSocketMessage) => {
         if (socketRef.current?.readyState === WebSocket.OPEN) {
-            console.debug("[useAgentSocket] Sending message:", msg)
+            console.debug("[vhl-webui:useAgentSocket] Sending message:", msg)
             socketRef.current.send(JSON.stringify(msg))
         } else {
             console.warn("WebSocket is not open. Cannot send message:", msg)
@@ -20,14 +20,14 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
         if (!url) return
 
         const connect = () => {
-            console.log(`[useAgentSocket] Attempting to connect to ${url}...`)
+            console.log(`[vhl-webui:useAgentSocket] Attempting to connect to ${url}...`)
             setStatus("connecting")
             const ws = new WebSocket(url)
             socketRef.current = ws
 
             ws.onopen = () => {
                 setStatus("open")
-                console.log(`[useAgentSocket] Successfully connected to ${url}`)
+                console.log(`[vhl-webui:useAgentSocket] Successfully connected to ${url}`)
                 if (onOpen) {
                     onOpen(send)
                 }
@@ -36,21 +36,21 @@ export const useAgentSocket = (url: string, onMessage: (msg: WebSocketMessage) =
             ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data) as WebSocketMessage
-                    console.debug("[useAgentSocket] Received message:", data)
+                    console.debug("[vhl-webui:useAgentSocket] Received message:", data)
                     onMessage(data)
                 } catch (err) {
-                    console.error("[useAgentSocket] Failed to parse WebSocket message", err, event.data)
+                    console.error("[vhl-webui:useAgentSocket] Failed to parse WebSocket message", err, event.data)
                 }
             }
 
             ws.onclose = (event) => {
                 setStatus("closed")
-                console.log(`[useAgentSocket] Disconnected from ${url}. Code: ${event.code}, Reason: ${event.reason}`)
+                console.log(`[vhl-webui:useAgentSocket] Disconnected from ${url}. Code: ${event.code}, Reason: ${event.reason}`)
             }
 
             ws.onerror = (err) => {
                 setStatus("error")
-                console.error(`[useAgentSocket] WebSocket error connecting to ${url}:`, err)
+                console.error(`[vhl-webui:useAgentSocket] WebSocket error connecting to ${url}:`, err)
             }
         }
 
